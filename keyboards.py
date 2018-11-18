@@ -54,7 +54,7 @@ def keyboard_command(message, bot):
     itembtn4 = types.KeyboardButton('/add')
     itembtn5 = types.KeyboardButton('/delete')
     markup.add(itembtn1, itembtn2, itembtn3, itembtn4, itembtn5)
-    bot.send_message(message.chat.id, 'Choose command:', reply_markup=markup, )
+    bot.send_message(message.chat.id, 'Командуй!)', reply_markup=markup, )
 
 
 def month_number(month):

@@ -18,16 +18,19 @@ def start(message):
 @bot.message_handler(commands=['all'])
 def all_birthdays(message):
     bot.send_message(message.chat.id, 'Все дни рождения:')
+    bot.send_message(message.chat.id, 'Я пока это не умею, но скоро научусь😋')
 
 
 @bot.message_handler(commands=['week'])
 def week_birthdays(message):
     bot.send_message(message.chat.id, 'Дни рождения на этой неделе:')
+    bot.send_message(message.chat.id, 'Я пока это не умею, но скоро научусь😋')
 
 
 @bot.message_handler(commands=['month'])
 def month_birthdays(message):
     bot.send_message(message.chat.id, 'Дни рождения в этом месяце:')
+    bot.send_message(message.chat.id, 'Я пока это не умею, но скоро научусь😋')
 
 
 @bot.message_handler(commands=['add'])
@@ -40,6 +43,7 @@ def add_user(message):
 @bot.message_handler(commands=['delete'])
 def delete_user(message):
     bot.send_message(message.chat.id, 'Удаляем лишнее:')
+    bot.send_message(message.chat.id, 'Я пока это не умею, но скоро научусь😋')
 
 
 @bot.message_handler(content_types=['text'])
@@ -51,6 +55,10 @@ def last_updates(message):
         add_user_information['name'] = last_update
         bot.send_message(message.chat.id, 'Именинник: {}'.format(add_user_information['name']))
         keyboards.keyboard_month(message, 'В каком месяце родился?', bot)
+    else:
+        bot.send_message(message.chat.id, 'Я не знаю что ты от меня хочешь 😓\nВот что я умею:' )
+        start(message)
+
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -59,7 +67,7 @@ def callback_inline(call):
     value = call.data.split('_')[1]
     if command == 'answer':
         if value == 'yes':
-            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Добавил')
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Добавил 😌')
 
 
         elif value == 'no':
