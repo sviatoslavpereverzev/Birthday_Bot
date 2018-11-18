@@ -7,8 +7,8 @@ MONTH = [['Декабрь', 'Январь', 'Февраль'], ['Март', 'А�
 
 def keyboard_y_or_n(message, text, bot):
     keyboard = types.InlineKeyboardMarkup()
-    button_yes = types.InlineKeyboardButton(text='Yes', callback_data='name_yes')
-    button_no = types.InlineKeyboardButton(text='No', callback_data='name_no')
+    button_yes = types.InlineKeyboardButton(text='Yes', callback_data='answer_yes')
+    button_no = types.InlineKeyboardButton(text='No', callback_data='answer_no')
     keyboard.add(button_yes, button_no)
     bot.send_message(message.chat.id, text, reply_markup=keyboard)
 
@@ -23,7 +23,7 @@ def keyboard_day(message, text, month, bot):
         for day in week:
             button[i].append(
                 types.InlineKeyboardButton(text='{}'.format((' ' if day[0] == False else day[0])),
-                                           callback_data='{}'.format(day[0])))
+                                           callback_data='day_{}'.format(day[0])))
         i += 1
     for week in button:
         keyboard.row(week[0], week[1], week[2], week[3], week[4], week[5], week[6])
@@ -37,7 +37,8 @@ def keyboard_month(message, text, bot):
     for seasons in MONTH:
         button.append([])
         for month in seasons:
-            button[i].append(types.InlineKeyboardButton(text='{}'.format(month), callback_data='{}'.format(month)))
+            button[i].append(types.InlineKeyboardButton(text='{}'.format(month),
+                                                        callback_data='month_{}'.format(month_number(month))))
         i += 1
     for seasons in button:
         keyboard.row(seasons[0], seasons[1], seasons[2])
@@ -53,3 +54,12 @@ def keyboard_command(message, bot):
     itembtn5 = types.KeyboardButton('/delete')
     markup.add(itembtn1, itembtn2, itembtn3, itembtn4, itembtn5)
     bot.send_message(message.chat.id, 'Choose command:', reply_markup=markup, )
+
+
+def month_number(month):
+    for season in MONTH:
+        try:
+            return 12 if (3 * MONTH.index(season) + season.index(month)) == 0 else (
+                        3 * MONTH.index(season) + season.index(month))
+        except:
+            pass
