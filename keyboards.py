@@ -60,6 +60,6 @@ def month_number(month):
     for season in MONTH:
         try:
             return 12 if (3 * MONTH.index(season) + season.index(month)) == 0 else (
-                        3 * MONTH.index(season) + season.index(month))
+                    3 * MONTH.index(season) + season.index(month))
         except:
             pass
