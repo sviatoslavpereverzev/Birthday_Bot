@@ -1,7 +1,8 @@
 from settings_bot import TOKEN
 import telebot
 import keyboards
-import time
+
+# import time
 
 bot = telebot.TeleBot(TOKEN)
 new_user = False
@@ -54,7 +55,6 @@ def last_updates(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
-    print(call.data)
     command = call.data.split('_')[0]
     value = call.data.split('_')[1]
     if command == 'answer':
@@ -71,9 +71,7 @@ def callback_inline(call):
     elif command == 'month':
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text='Месяц: {}'.format(call.data.split('_')[-1]))
-        # number_month = value
         add_user_information['month'] = [call.data.split('_')[1], call.data.split('_')[-1]]
-        print(add_user_information)
 
         keyboards.keyboard_day(call.message, 'В какой день?', add_user_information['month'][0], bot)
 
@@ -85,11 +83,6 @@ def callback_inline(call):
                                                              add_user_information['month'][1],
                                                              add_user_information['date'])
         keyboards.keyboard_y_or_n(call.message, (user, 'Все правильно? Добавляем?'), bot)
-
-
-def choose_month(message, text, bot):
-    keyboards.keyboard_month(message, text, bot)
-    keyboards.keyboard_day(message, text, 12, bot)
 
 
 bot.polling()
