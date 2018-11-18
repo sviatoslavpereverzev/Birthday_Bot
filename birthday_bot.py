@@ -11,22 +11,22 @@ add_user_information = {}
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    keyboards.keyboard_month(message, 'smmm', bot)
+    keyboards.keyboard_command(message, bot)
 
 
 @bot.message_handler(commands=['all'])
 def all_birthdays(message):
-    bot.send_message(message.chat.id, 'All birthdays:')
+    bot.send_message(message.chat.id, 'Все дни рождения:')
 
 
 @bot.message_handler(commands=['week'])
 def week_birthdays(message):
-    bot.send_message(message.chat.id, 'Birthdays on this week:')
+    bot.send_message(message.chat.id, 'Дни рождения на этой неделе:')
 
 
 @bot.message_handler(commands=['month'])
 def month_birthdays(message):
-    bot.send_message(message.chat.id, 'Birthdays on this month:')
+    bot.send_message(message.chat.id, 'Дни рождения в этом месяце:')
 
 
 @bot.message_handler(commands=['add'])
@@ -38,7 +38,7 @@ def add_user(message):
 
 @bot.message_handler(commands=['delete'])
 def delete_user(message):
-    bot.send_message(message.chat.id, 'Delete birthday:')
+    bot.send_message(message.chat.id, 'Удаляем лишнее:')
 
 
 @bot.message_handler(content_types=['text'])
