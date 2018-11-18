@@ -5,11 +5,12 @@ import calendar
 import time
 
 bot = telebot.TeleBot(TOKEN)
-upd = bot.get_updates()
 new_user = False
+MONTH = [['Декабрь', 'Январь', 'Февраль'], ['Март', 'Апрель', 'Май'], ['Июнь', 'Июль', 'Август'],
+         ['Сентябрь', 'Октябрь', 'Ноябрь']]
 
 
-def keybord_y_or_n(message, text):
+def keyboard_y_or_n(message, text):
     keyboard = types.InlineKeyboardMarkup()
     button_yes = types.InlineKeyboardButton(text='Yes', callback_data='name_yes')
     button_no = types.InlineKeyboardButton(text='No', callback_data='name_no')
@@ -17,36 +18,51 @@ def keybord_y_or_n(message, text):
     bot.send_message(message.chat.id, text, reply_markup=keyboard)
 
 
-def keybord_day(message, text, month):
+def keyboard_day(message, text, month):
     keyboard = types.InlineKeyboardMarkup()
     cal = calendar.Calendar(firstweekday=0)
-    day_in_month = []
-    button = {}
-    for day in cal.monthdays2calendar(2000, month):
-        day_in_month.append(day)
-
-    for week in range(len(day_in_month)):
-        print(week)
-        for day in day_in_month[week]:
-            print(day[0])
-
-
-    # for x in day_in_month[0]:
-    #     keybord.add(x)
-
+    button = []
+    i = 0
+    for week in cal.monthdays2calendar(2000, month):
+        button.append([])
+        for day in week:
+            button[i].append(
+                types.InlineKeyboardButton(text='{}'.format((' ' if day[0] == False else day[0])),
+                                           callback_data='{}'.format(day[0])))
+        i += 1
+    for week in button:
+        keyboard.row(week[0], week[1], week[2], week[3], week[4], week[5], week[6])
     bot.send_message(message.chat.id, text, reply_markup=keyboard)
 
-@ bot.message_handler(commands=['start'])
-def keybord(message):
-    keybord_day(message, 'smmm', 2)
-    # markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
-    # itembtn1 = types.KeyboardButton('/all')
-    # itembtn2 = types.KeyboardButton('/week')
-    # itembtn3 = types.KeyboardButton('/month')
-    # itembtn4 = types.KeyboardButton('/add')
-    # itembtn5 = types.KeyboardButton('/delete')
-    # markup.add(itembtn1, itembtn2, itembtn3, itembtn4, itembtn5)
-    # bot.send_message(message.chat.id, 'Choose command:', reply_markup=markup, )
+
+def keyboard_month(message, text):
+    keyboard = types.InlineKeyboardMarkup()
+    button = []
+    i = 0
+    for seasons in MONTH:
+        button.append([])
+        for month in seasons:
+            button[i].append(types.InlineKeyboardButton(text='{}'.format(month), callback_data='{}'.format(month)))
+        i += 1
+    for seasons in button:
+        keyboard.row(seasons[0], seasons[1], seasons[2])
+    bot.send_message(message.chat.id, text, reply_markup=keyboard)
+
+
+def keyboard_command(message):
+    markup = types.ReplyKeyboardMarkup(row_width=2, one_time_keyboard=True, resize_keyboard=True)
+    itembtn1 = types.KeyboardButton('/all')
+    itembtn2 = types.KeyboardButton('/week')
+    itembtn3 = types.KeyboardButton('/month')
+    itembtn4 = types.KeyboardButton('/add')
+    itembtn5 = types.KeyboardButton('/delete')
+    markup.add(itembtn1, itembtn2, itembtn3, itembtn4, itembtn5)
+    bot.send_message(message.chat.id, 'Choose command:', reply_markup=markup, )
+
+
+@bot.message_handler(commands=['start'])
+def keyborad(message):
+    keyboard_month(message, 'smmm')
 
 
 @bot.message_handler(commands=['all'])
@@ -83,7 +99,7 @@ def last_message(message):
     if new_user:
         new_user = False
         text = '{}\nThis is the name? '.format(lm)
-        keybord_y_or_n(message, text)
+        keyboard_y_or_n(message, text)
 
 
 @bot.callback_query_handler(func=lambda call: True)
