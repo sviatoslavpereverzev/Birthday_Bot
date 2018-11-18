@@ -64,6 +64,3 @@ def month_number(month):
                     3 * MONTH.index(season) + season.index(month))
         except:
             pass
-
-# def month_name(number):
-#
