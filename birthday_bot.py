@@ -7,7 +7,7 @@ import keyboards
 bot = telebot.TeleBot(TOKEN)
 
 
-class User():
+class User(object):
     def __init__(self, from_user):
         self.id = from_user.id
         self.is_bot = from_user.is_bot
