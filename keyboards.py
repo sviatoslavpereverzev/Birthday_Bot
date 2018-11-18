@@ -7,17 +7,18 @@ MONTH = [['Декабрь', 'Январь', 'Февраль'], ['Март', 'А�
 
 def keyboard_y_or_n(message, text, bot):
     keyboard = types.InlineKeyboardMarkup()
-    button_yes = types.InlineKeyboardButton(text='Yes', callback_data='answer_yes')
-    button_no = types.InlineKeyboardButton(text='No', callback_data='answer_no')
+    button_yes = types.InlineKeyboardButton(text='Правильно', callback_data='answer_yes')
+    button_no = types.InlineKeyboardButton(text='Что-то не так... ', callback_data='answer_no')
     keyboard.add(button_yes, button_no)
     bot.send_message(message.chat.id, text, reply_markup=keyboard)
 
 
 def keyboard_day(message, text, month, bot):
-    keyboard = types.InlineKeyboardMarkup()
-    cal = calendar.Calendar(firstweekday=0)
+    month = int(month)
     button = []
     i = 0
+    cal = calendar.Calendar(firstweekday=0)
+    keyboard = types.InlineKeyboardMarkup()
     for week in cal.monthdays2calendar(2000, month):
         button.append([])
         for day in week:
@@ -38,7 +39,7 @@ def keyboard_month(message, text, bot):
         button.append([])
         for month in seasons:
             button[i].append(types.InlineKeyboardButton(text='{}'.format(month),
-                                                        callback_data='month_{}'.format(month_number(month))))
+                                                        callback_data='month_{}_{}'.format(month_number(month), month)))
         i += 1
     for seasons in button:
         keyboard.row(seasons[0], seasons[1], seasons[2])
@@ -63,3 +64,6 @@ def month_number(month):
                     3 * MONTH.index(season) + season.index(month))
         except:
             pass
+
+# def month_name(number):
+#

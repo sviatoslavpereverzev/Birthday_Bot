@@ -6,6 +6,7 @@ import time
 bot = telebot.TeleBot(TOKEN)
 new_user = False
 last_update = ''
+add_user_information = {}
 
 
 @bot.message_handler(commands=['start'])
@@ -30,7 +31,7 @@ def month_birthdays(message):
 
 @bot.message_handler(commands=['add'])
 def add_user(message):
-    bot.send_message(message.chat.id, 'Add a new birthday: \nWrite whose birthday-')
+    bot.send_message(message.chat.id, 'Добавим нового именинника: \nНапиши кто именинник?')
     global new_user
     new_user = True
 
@@ -42,35 +43,53 @@ def delete_user(message):
 
 @bot.message_handler(content_types=['text'])
 def last_updates(message):
-    global last_update, add_user_name, new_user
+    global last_update, add_user_information, new_user
     last_update = message.text
     if new_user:
         new_user = False
-        text = '{}\nThis is the name? '.format(last_update)
-        keyboards.keyboard_y_or_n(message, text, bot)
+        add_user_information['name'] = last_update
+        bot.send_message(message.chat.id, 'Именинник: {}'.format(add_user_information['name']))
+        keyboards.keyboard_month(message, 'В каком месяце родился?', bot)
 
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
     print(call.data)
-    if call.data == 'answer_yes':
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Next step')
-        add_user_name = last_update
-        choose_month(call.message, 'Mecяц', bot)
+    command = call.data.split('_')[0]
+    value = call.data.split('_')[1]
+    if command == 'answer':
+        if value == 'yes':
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Добавил')
 
-    elif call.data == 'answer_no':
-        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Try again')
-        global new_user
-        new_user = True
 
-@bot.callback_query_handler(func=lambda call: True)
-def callback_inline(call):
-    print(call.data)
+        elif value == 'no':
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                                  text='Давай по новой \nТак кто именинник?')
+            global new_user
+            new_user = True
+
+    elif command == 'month':
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                              text='Месяц: {}'.format(call.data.split('_')[-1]))
+        # number_month = value
+        add_user_information['month'] = [call.data.split('_')[1], call.data.split('_')[-1]]
+        print(add_user_information)
+
+        keyboards.keyboard_day(call.message, 'В какой день?', add_user_information['month'][0], bot)
+
+    elif command == 'day':
+        bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                              text='День: {}'.format(value))
+        add_user_information['date'] = value
+        user = 'Именинник: {}, месяц: {}, день: {}\n'.format(add_user_information['name'],
+                                                             add_user_information['month'][1],
+                                                             add_user_information['date'])
+        keyboards.keyboard_y_or_n(call.message, (user, 'Все правильно? Добавляем?'), bot)
 
 
 def choose_month(message, text, bot):
     keyboards.keyboard_month(message, text, bot)
-
+    keyboards.keyboard_day(message, text, 12, bot)
 
 
 bot.polling()
