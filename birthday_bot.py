@@ -5,14 +5,71 @@ import keyboards
 # import time
 
 bot = telebot.TeleBot(TOKEN)
-new_user = False
-last_update = ''
-add_user_information = {}
+
+
+class User():
+    def __init__(self, from_user):
+        self.id = from_user.id
+        self.is_bot = from_user.is_bot
+        self.name_user = from_user.first_name
+        self.username = from_user.username
+        self.last_name = from_user.last_name
+        self.language_code = from_user.language_code
+
+    def get_info(self):
+        return self.id, self.is_bot, self.name_user, self.username, self.last_name, self.language_code
+
+    def add_user_information(self):
+        self.add_user_name = None
+        self.add_user_date = None
+        self.add_user_month = None
+
+    def set_add_user_name(self, name):
+        self.add_user_name = name
+
+    def set_add_user_date(self, date):
+        self.add_user_date = date
+
+    def set_add_user_month(self, month):
+        self.add_user_month = month
+
+    def get_add_user_name(self):
+        return self.add_user_name
+
+    def get_add_user_date(self):
+        return self.add_user_date
+
+    def get_add_user_month(self):
+        return self.add_user_month
+
+    def add_new_user(self):
+        self.add_new_user = False
+
+    def set_add_new_user(self, bool):
+        self.add_new_user = bool
+
+    def get_add_new_user(self):
+        return self.add_new_user
+
+    def last_update(self):
+        self.last_update = None
+
+    def set_last_update(self, update):
+        self.last_update = update
+
+    def get_last_update(self):
+        return self.last_update
+
+
+# new_user = False
+# last_update = ''
+# add_user_information = {}
 
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    keyboards.keyboard_command(message, bot)
+    user = User(message.from_user)
+    bot.send_message(message.chat.id, 'Привет {} {}'.format(message.from_user.first_name, message.from_user.last_name))
 
 
 @bot.message_handler(commands=['all'])
@@ -56,9 +113,8 @@ def last_updates(message):
         bot.send_message(message.chat.id, 'Именинник: {}'.format(add_user_information['name']))
         keyboards.keyboard_month(message, 'В каком месяце родился?', bot)
     else:
-        bot.send_message(message.chat.id, 'Я не знаю что ты от меня хочешь 😓\nВот что я умею:' )
+        bot.send_message(message.chat.id, 'Я не знаю что ты от меня хочешь 😓\nВот что я умею:')
         start(message)
-
 
 
 @bot.callback_query_handler(func=lambda call: True)
