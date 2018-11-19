@@ -1,7 +1,8 @@
-from settings_bot import TOKEN
+from settings_bot import TOKEN, MYSQLPASSWORD
 import telebot
 import keyboards
-
+import mysql.connector
+from mysql.connector import Error
 # import time
 
 bot = telebot.TeleBot(TOKEN)
@@ -60,6 +61,20 @@ class User(object):
     def get_last_update(self):
         return self.last_update
 
+class ConnectDb(object):
+    def connect(self):
+        try:
+            conn = mysql.connector.connect(host='localhost',
+                                           user='root',
+                                           password=MYSQLPASSWORD)
+            if conn.is_connected():
+                print('Connected to MySQL database')
+
+        except Error as e:
+            print(e)
+
+        finally:
+            conn.close()
 
 # new_user = False
 # last_update = ''
@@ -70,6 +85,8 @@ class User(object):
 def start(message):
     user = User(message.from_user)
     bot.send_message(message.chat.id, 'Привет {} {}'.format(message.from_user.first_name, message.from_user.last_name))
+    db = ConnectDb()
+    db.connect()
 
 
 @bot.message_handler(commands=['all'])
