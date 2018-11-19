@@ -62,19 +62,20 @@ class User(object):
         return self.last_update
 
 class ConnectDb(object):
-    def connect(self):
+    def connected(self):
         try:
-            conn = mysql.connector.connect(host='localhost',
+            self.connect = mysql.connector.connect(host='localhost',
                                            user='root',
                                            password=MYSQLPASSWORD)
-            if conn.is_connected():
+            if self.connect.is_connected():
                 print('Connected to MySQL database')
 
         except Error as e:
             print(e)
 
-        finally:
-            conn.close()
+    def close_connect(self):
+        self.connect.close()
+
 
 # new_user = False
 # last_update = ''
