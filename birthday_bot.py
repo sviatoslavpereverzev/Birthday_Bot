@@ -109,6 +109,7 @@ class ConnectDb(object):
 
 @bot.message_handler(commands=['start'])
 def start(message):
+    global user, db
     user = User(message.from_user)
     db = ConnectDb()
     db.connected()
@@ -146,9 +147,15 @@ def month_birthdays(message):
 
 @bot.message_handler(commands=['add'])
 def add_user(message):
+    global user, db
+    try:
+        user.set_add_new_user(True)
+    except NameError:
+        user = User(message.from_user)
+        db = ConnectDb()
+        user.set_add_new_user(True)
+
     bot.send_message(message.chat.id, 'Добавим нового именинника: \nНапиши кто именинник?')
-    global new_user
-    new_user = True
 
 
 @bot.message_handler(commands=['delete'])
@@ -159,12 +166,12 @@ def delete_user(message):
 
 @bot.message_handler(content_types=['text'])
 def last_updates(message):
-    global last_update, add_user_information, new_user
+    global user, db
     last_update = message.text
-    if new_user:
-        new_user = False
-        add_user_information['name'] = last_update
-        bot.send_message(message.chat.id, 'Именинник: {}'.format(add_user_information['name']))
+    if user.get_add_new_user():
+        user.set_add_new_user(False)
+        user.set_add_user_name(last_update)
+        bot.send_message(message.chat.id, 'Именинник: {}'.format(user.get_add_user_name()))
         keyboards.keyboard_month(message, 'В каком месяце родился?', bot)
     else:
         bot.send_message(message.chat.id, 'Я не знаю что ты от меня хочешь 😓\nВот что я умею:')
@@ -173,6 +180,7 @@ def last_updates(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
+    global user, db
     command = call.data.split('_')[0]
     value = call.data.split('_')[1]
     if command == 'answer':
@@ -189,17 +197,18 @@ def callback_inline(call):
     elif command == 'month':
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text='Месяц: {}'.format(call.data.split('_')[-1]))
-        add_user_information['month'] = [call.data.split('_')[1], call.data.split('_')[-1]]
-
-        keyboards.keyboard_day(call.message, 'В какой день?', add_user_information['month'][0], bot)
+        user.set_add_user_month([call.data.split('_')[1], call.data.split('_')[-1]])
+        month = user.get_add_user_month()[0]
+        keyboards.keyboard_day(call.message, 'В какой день?', month, bot)
 
     elif command == 'day':
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text='День: {}'.format(value))
-        add_user_information['date'] = value
-        user = 'Именинник: {}, месяц: {}, день: {}\n'.format(add_user_information['name'],
-                                                             add_user_information['month'][1],
-                                                             add_user_information['date'])
+        user.set_add_user_date(value)
+        user = 'Именинник: {}, месяц: {}, день: {}\n'.format(user.get_add_user_name(),
+                                                             user.get_add_user_month()[1],
+                                                             user.get_add_user_date())
+
         keyboards.keyboard_y_or_n(call.message, (user, 'Все правильно? Добавляем?'), bot)
 
 
