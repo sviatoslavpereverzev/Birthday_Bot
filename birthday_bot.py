@@ -3,6 +3,7 @@ import telebot
 import keyboards
 import mysql.connector
 from mysql.connector import Error
+
 # import time
 
 bot = telebot.TeleBot(TOKEN)
@@ -12,13 +13,15 @@ class User(object):
     def __init__(self, from_user):
         self.id = from_user.id
         self.is_bot = from_user.is_bot
-        self.name_user = from_user.first_name
+        self.first_name = from_user.first_name
         self.username = from_user.username
         self.last_name = from_user.last_name
         self.language_code = from_user.language_code
 
-    def get_info(self):
-        return self.id, self.is_bot, self.name_user, self.username, self.last_name, self.language_code
+    def get_user_info(self):
+        user_info = {'id': self.id, 'is_bot': self.is_bot, 'first_name': self.first_name, 'username': self.username,
+                     'last_name': self.last_name, 'language_code': self.language_code}
+        return user_info
 
     def add_user_information(self):
         self.add_user_name = None
@@ -61,20 +64,42 @@ class User(object):
     def get_last_update(self):
         return self.last_update
 
+
 class ConnectDb(object):
     def connected(self):
         try:
-            self.connect = mysql.connector.connect(host='localhost',
-                                           user='root',
-                                           password=MYSQLPASSWORD)
-            if self.connect.is_connected():
+            self.db = mysql.connector.connect(host='localhost',
+                                              user='root',
+                                              database='Birthday_bot',
+                                              password=MYSQLPASSWORD)
+            if self.db.is_connected():
                 print('Connected to MySQL database')
 
         except Error as e:
             print(e)
 
     def close_connect(self):
-        self.connect.close()
+        self.db.close()
+
+    def is_there_a_user(self, id):
+        sql_select_user = 'SELECT * FROM Users_Birthday_bot WHERE id = {}'.format(id)
+        mycursor = self.db.cursor()
+        mycursor.execute(sql_select_user)
+        myresult = mycursor.fetchall()
+        if not myresult:
+            print('Нет такого')
+            return True
+        print(myresult)
+        return False
+
+    def add_user_in_table_users(self, user_info):
+        sql_add_user = 'INSERT INTO Users_Birthday_bot (first_name, last_name, id, username, is_bot, language_code) VALUES (%s, %s, %s, %s, %s, %s)'
+        user = (user_info['first_name'], user_info['last_name'], user_info['id'], user_info['username'],
+                user_info['is_bot'], user_info['language_code'])
+        mycursor = self.db.cursor()
+        mycursor.execute(sql_add_user, user)
+        self.db.commit()
+        return True
 
 
 # new_user = False
@@ -85,9 +110,14 @@ class ConnectDb(object):
 @bot.message_handler(commands=['start'])
 def start(message):
     user = User(message.from_user)
-    bot.send_message(message.chat.id, 'Привет {} {}'.format(message.from_user.first_name, message.from_user.last_name))
     db = ConnectDb()
-    db.connect()
+    db.connected()
+    user_info = user.get_user_info()
+    if db.is_there_a_user(user_info['id']):
+        db.add_user_in_table_users(user_info)
+    db.close_connect()
+    bot.send_message(message.chat.id,
+                     'Привет {} {}'.format(message.from_user.first_name, message.from_user.last_name))
 
 
 @bot.message_handler(commands=['all'])
