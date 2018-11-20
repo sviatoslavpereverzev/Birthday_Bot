@@ -119,6 +119,11 @@ def start(message):
     bot.send_message(message.chat.id,
                      'Привет {} {}'.format(message.from_user.first_name, message.from_user.last_name))
 
+@bot.message_handler(commands=['commands'])
+def commands(message):
+    bot.send_message(message.chat.id, 'Вот что я умею:')
+    keyboards.keyboard_command(message, bot)
+
 
 @bot.message_handler(commands=['all'])
 def all_birthdays(message):
