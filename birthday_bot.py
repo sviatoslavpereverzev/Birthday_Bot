@@ -102,11 +102,6 @@ class ConnectDb(object):
         return True
 
 
-# new_user = False
-# last_update = ''
-# add_user_information = {}
-
-
 @bot.message_handler(commands=['start'])
 def start(message):
     global user, db
@@ -167,10 +162,10 @@ def delete_user(message):
 @bot.message_handler(content_types=['text'])
 def last_updates(message):
     global user, db
-    last_update = message.text
+    user.set_last_update(message.text)
     if user.get_add_new_user():
         user.set_add_new_user(False)
-        user.set_add_user_name(last_update)
+        user.set_add_user_name(user.get_last_update())
         bot.send_message(message.chat.id, 'Именинник: {}'.format(user.get_add_user_name()))
         keyboards.keyboard_month(message, 'В каком месяце родился?', bot)
     else:
