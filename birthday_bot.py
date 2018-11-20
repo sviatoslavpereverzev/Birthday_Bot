@@ -119,6 +119,7 @@ def start(message):
     bot.send_message(message.chat.id,
                      'Привет {} {}'.format(message.from_user.first_name, message.from_user.last_name))
 
+
 @bot.message_handler(commands=['commands'])
 def commands(message):
     bot.send_message(message.chat.id, 'Вот что я умею:')
@@ -202,4 +203,9 @@ def callback_inline(call):
         keyboards.keyboard_y_or_n(call.message, (user, 'Все правильно? Добавляем?'), bot)
 
 
-bot.polling()
+def main():
+    bot.polling()
+
+
+if __name__ == '__main__':
+    main()
