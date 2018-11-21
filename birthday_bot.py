@@ -101,6 +101,16 @@ class ConnectDb(object):
         self.db.commit()
         return True
 
+    def add_birthday(self, user):
+        # print(user.get_add_user_name(), int(user.get_add_user_month()[0]), user.get_add_user_month()[1],
+        #     int(user.get_add_user_date()))
+        mycursor = self.db.cursor()
+        sql = 'INSERT INTO id_529088251 (name, month_int, month_str, day) VALUES (%s, %s, %s, %s)'
+        user = (user.get_add_user_name(), int(user.get_add_user_month()[0]), user.get_add_user_month()[1],
+                int(user.get_add_user_date()))
+        mycursor.execute(sql, user)
+        self.db.commit()
+
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -111,7 +121,7 @@ def start(message):
     user_info = user.get_user_info()
     if db.is_there_a_user(user_info['id']):
         db.add_user_in_table_users(user_info)
-    db.close_connect()
+    # db.close_connect()
     bot.send_message(message.chat.id,
                      'Привет {} {}'.format(message.from_user.first_name, message.from_user.last_name))
 
@@ -180,6 +190,7 @@ def callback_inline(call):
     value = call.data.split('_')[1]
     if command == 'answer':
         if value == 'yes':
+            db.add_birthday(user)
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Добавил 😌')
 
 
@@ -200,11 +211,11 @@ def callback_inline(call):
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text='День: {}'.format(value))
         user.set_add_user_date(value)
-        user = 'Именинник: {}, месяц: {}, день: {}\n'.format(user.get_add_user_name(),
-                                                             user.get_add_user_month()[1],
-                                                             user.get_add_user_date())
+        user_add = 'Именинник: {}, месяц: {}, день: {}\n'.format(user.get_add_user_name(),
+                                                                 user.get_add_user_month()[1],
+                                                                 user.get_add_user_date())
 
-        keyboards.keyboard_y_or_n(call.message, (user, 'Все правильно? Добавляем?'), bot)
+        keyboards.keyboard_y_or_n(call.message, (user_add, 'Все правильно? Добавляем?'), bot)
 
 
 def main():
