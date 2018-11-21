@@ -129,7 +129,7 @@ def start(message):
     user_info = user.get_user_info()
     if db.is_there_a_user(user_info['id']):
         db.add_user_in_table_users(user_info)
-    # db.close_connect()
+    db.close_connect()
     bot.send_message(message.chat.id,
                      'Привет {} {}'.format(message.from_user.first_name, message.from_user.last_name))
 
@@ -142,11 +142,18 @@ def commands(message):
 
 @bot.message_handler(commands=['all'])
 def all_birthdays(message):
+    global user, db
+    user = User(message.from_user)
+    db = ConnectDb()
+    db.connected()
     bot.send_message(message.chat.id, 'Все дни рождения:')
     birthdays = db.get_birthday()
     for result in birthdays:
         bot.send_message(message.chat.id,
-                         '{}'.format(str(result).replace(',', '').replace("'", '').replace('(', '').replace(')', '')))
+                         '{}'.format(
+                             str(result).replace(',', '').replace("'", '').replace('(', '').replace(')', '')))
+    db.close_connect()
+
 
 
 @bot.message_handler(commands=['week'])
