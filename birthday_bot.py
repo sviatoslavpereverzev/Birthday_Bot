@@ -23,6 +23,9 @@ class User(object):
                      'last_name': self.last_name, 'language_code': self.language_code}
         return user_info
 
+    def get_user_id(self):
+        return self.id
+
     def add_user_information(self):
         self.add_user_name = None
         self.add_user_date = None
@@ -102,10 +105,8 @@ class ConnectDb(object):
         return True
 
     def add_birthday(self, user):
-        # print(user.get_add_user_name(), int(user.get_add_user_month()[0]), user.get_add_user_month()[1],
-        #     int(user.get_add_user_date()))
         mycursor = self.db.cursor()
-        sql = 'INSERT INTO id_529088251 (name, month_int, month_str, day) VALUES (%s, %s, %s, %s)'
+        sql = 'INSERT INTO id_{} (name, month_int, month_str, day) VALUES (%s, %s, %s, %s)'.format(user.get_user_id())
         user = (user.get_add_user_name(), int(user.get_add_user_month()[0]), user.get_add_user_month()[1],
                 int(user.get_add_user_date()))
         mycursor.execute(sql, user)
