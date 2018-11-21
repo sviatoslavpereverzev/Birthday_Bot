@@ -112,6 +112,13 @@ class ConnectDb(object):
         mycursor.execute(sql, user)
         self.db.commit()
 
+    def get_birthday(self):
+        mycursor = self.db.cursor()
+        sql = 'SELECT name, month_str, day FROM Birthday_bot.id_{};'.format(user.get_user_id())
+        mycursor.execute(sql)
+        myresult = mycursor.fetchall()
+        return myresult
+
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -136,7 +143,10 @@ def commands(message):
 @bot.message_handler(commands=['all'])
 def all_birthdays(message):
     bot.send_message(message.chat.id, 'Все дни рождения:')
-    bot.send_message(message.chat.id, 'Я пока это не умею, но скоро научусь😋')
+    birthdays = db.get_birthday()
+    for result in birthdays:
+        bot.send_message(message.chat.id,
+                         '{}'.format(str(result).replace(',', '').replace("'", '').replace('(', '').replace(')', '')))
 
 
 @bot.message_handler(commands=['week'])
