@@ -140,7 +140,7 @@ def start(message):
         db.create_user_db(user.get_user_id())
         db.add_user_in_table_users(user_info)
 
-    # db.close_connect()
+    db.close_connect()
     bot.send_message(message.chat.id,
                      'Привет, {} {} 👋'.format(message.from_user.first_name, message.from_user.last_name))
 
@@ -163,7 +163,6 @@ def all_birthdays(message):
         bot.send_message(message.chat.id,
                          '{}'.format(
                              str(result).replace(',', '').replace("'", '').replace('(', '').replace(')', '')))
-    db.close_connect()
 
 
 @bot.message_handler(commands=['week'])
@@ -185,7 +184,7 @@ def add_user(message):
         user.set_add_new_user(True)
     except NameError:
         user = User(message.from_user)
-        db = ConnectDb()
+        # db = ConnectDb()
         user.set_add_new_user(True)
 
     bot.send_message(message.chat.id, 'Добавим нового именинника: \nНапиши кто именинник?')
@@ -218,9 +217,18 @@ def callback_inline(call):
     value = call.data.split('_')[1]
     if command == 'answer':
         if value == 'yes':
-            db.add_birthday(user)
-            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id, text='Добавил 😌')
-
+            # db = ConnectDb()
+            try:
+                db.connected()
+                db.add_birthday(user)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                                      text='Добавил 😌')
+            except NameError:
+                db = ConnectDb()
+                db.connected()
+                db.add_birthday(user)
+                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                                      text='Добавил 😌')
 
         elif value == 'no':
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
