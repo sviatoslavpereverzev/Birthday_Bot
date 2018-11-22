@@ -119,6 +119,15 @@ class ConnectDb(object):
         myresult = mycursor.fetchall()
         return myresult
 
+    def create_user_db(self, id):
+        try:
+            mycursor = self.db.cursor()
+            sql = 'CREATE TABLE id_{} (name VARCHAR(255), month_int INTEGER(2), month_str VARCHAR(25), day INTEGER(2), year_of_birth INTEGER(4), remind_month BOOL DEFAULT 0, remind_week BOOL DEFAULT 0, remind_day BOOL DEFAULT 0)'.format(
+                id)
+            mycursor.execute(sql)
+        except mysql.connector.errors.ProgrammingError:
+            print('Таблица id_{} уже есть!'.format(id))
+
 
 @bot.message_handler(commands=['start'])
 def start(message):
@@ -128,10 +137,12 @@ def start(message):
     db.connected()
     user_info = user.get_user_info()
     if db.is_there_a_user(user_info['id']):
+        db.create_user_db(user.get_user_id())
         db.add_user_in_table_users(user_info)
-    db.close_connect()
+
+    # db.close_connect()
     bot.send_message(message.chat.id,
-                     'Привет {} {}'.format(message.from_user.first_name, message.from_user.last_name))
+                     'Привет, {} {} 👋'.format(message.from_user.first_name, message.from_user.last_name))
 
 
 @bot.message_handler(commands=['commands'])
@@ -153,7 +164,6 @@ def all_birthdays(message):
                          '{}'.format(
                              str(result).replace(',', '').replace("'", '').replace('(', '').replace(')', '')))
     db.close_connect()
-
 
 
 @bot.message_handler(commands=['week'])
