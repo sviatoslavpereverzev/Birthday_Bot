@@ -9,7 +9,96 @@ from mysql.connector import Error
 bot = telebot.TeleBot(TOKEN)
 
 
-class User(object):
+class ScenarioPoint(object):
+    command = None
+    next = []
+    is_finish = False
+    start_points = [AddName, DeleteRecord]
+
+    def run(self):
+        pass
+
+    @classmethod
+    def findPoint(cls, code):  # 11432
+        current_scenario = cls.start_points[int(code[0])]  # -> AddName
+        i = 0
+        while (i < len(code)):
+            code_i = int(i)
+            current_scenario = current_scenario.next[code_i]  # -> AddMonth
+        return current_scenario  # AddMonth
+
+
+class AddName(ScenarioPoint):
+    command = "/add"
+    next = [AddMonth]
+
+    def run(self, user, message, metadata={}):
+        record = Record()
+        record.name = message
+        record.save()
+        metadata["record_id"] = record.id
+        return metadata
+
+
+class AddMonth(ScenarioPoint):
+    next = [AddDay]
+
+    def run(self, user, message, metadata={}):
+        record = Record.load(metadata["record_id"])
+        record.month = message
+        record.save()
+        return metadata
+
+
+class DeleteRecord(ScenarioPoint):
+    command = "/delete"
+
+    def __init__(self, next):
+        self.next = [ChooseRecord([DeleteConfirm()])]
+
+    def run(self, user, message, metadata={}):
+        record = Record.load(metadata["record_id"])
+        record.month = message
+        record.save()
+        return metadata
+
+
+class ChooseRecord(ScenarioPoint):
+
+    def __init__(self, next):
+        self.next = next
+
+    def run(self, user, message, metadata={}):
+        record = Record.load(metadata["record_id"])
+        record.month = message
+        record.save()
+        return metadata
+
+
+class DeletingConfirm(ScenarioPoint):
+    next = [AddDay]
+
+    def run(self, user, message, metadata={}):
+        record = Record.load(metadata["record_id"])
+        record.month = message
+        record.save()
+        return metadata
+
+
+class EditRecord(ScenarioPoint):
+    next = [ChooseRecord]
+
+    def run(self, user, message, metadata={}):
+        record = Record.load(metadata["record_id"])
+        record.month = message
+        record.save()
+        return metadata
+
+
+# class DBEntity(object):
+#     db_connect = None
+
+class User(DBEntity):
     def __init__(self, from_user):
         self.id = from_user.id
         self.is_bot = from_user.is_bot
@@ -17,6 +106,16 @@ class User(object):
         self.username = from_user.username
         self.last_name = from_user.last_name
         self.language_code = from_user.language_code
+
+    def save(self):
+        self.db_connect.query("")
+
+    @classmethod
+    def loadUser(cls, id):
+
+    # data = self.db_connect.query()
+    # loaded_user = cls(data)
+    # return loaded_user
 
     def get_user_info(self):
         user_info = {'id': self.id, 'is_bot': self.is_bot, 'first_name': self.first_name, 'username': self.username,
@@ -71,10 +170,7 @@ class User(object):
 class ConnectDb(object):
     def connected(self):
         try:
-            self.db = mysql.connector.connect(host='localhost',
-                                              user='root',
-                                              database='Birthday_bot',
-                                              password=MYSQLPASSWORD)
+            self.db = None
             if self.db.is_connected():
                 print('Connected to MySQL database')
 
@@ -167,6 +263,9 @@ def all_birthdays(message):
 
 @bot.message_handler(commands=['week'])
 def week_birthdays(message):
+    user = User.loadUser(massage.from_user.id)
+    user.scenario_code = "1124232"
+    user.save()
     bot.send_message(message.chat.id, 'Дни рождения на этой неделе:')
     bot.send_message(message.chat.id, 'Я пока это не умею, но скоро научусь😋')
 
@@ -181,6 +280,7 @@ def month_birthdays(message):
 def add_user(message):
     global user, db
     try:
+        # get user scenario status from db or Global Static Config Class
         user.set_add_new_user(True)
     except NameError:
         user = User(message.from_user)
@@ -198,16 +298,21 @@ def delete_user(message):
 
 @bot.message_handler(content_types=['text'])
 def last_updates(message):
-    global user, db
-    user.set_last_update(message.text)
-    if user.get_add_new_user():
-        user.set_add_new_user(False)
-        user.set_add_user_name(user.get_last_update())
-        bot.send_message(message.chat.id, 'Именинник: {}'.format(user.get_add_user_name()))
-        keyboards.keyboard_month(message, 'В каком месяце родился?', bot)
-    else:
-        bot.send_message(message.chat.id, 'Я не знаю что ты от меня хочешь 😓\nВот что я умею:')
-        start(message)
+    user = User.loadUser(id)
+    scenario_code, metadata = user.get_context()
+    scenario = ScenarioPoint.findPoint(scenario_code)
+    scenario.run(user, message, metadata)
+
+    # global user, db
+    # user.set_last_update(message.text)
+    # if user.get_add_new_user():
+    #     user.set_add_new_user(False)
+    #     user.set_add_user_name(user.get_last_update())
+    #     bot.send_message(message.chat.id, 'Именинник: {}'.format(user.get_add_user_name()))
+    #     keyboards.keyboard_month(message, 'В каком месяце родился?', bot)
+    # else:
+    #     bot.send_message(message.chat.id, 'Я не знаю что ты от меня хочешь 😓\nВот что я умею:')
+    #     start(message)
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -255,6 +360,12 @@ def callback_inline(call):
 
 
 def main():
+    db = ConnectDb()
+    db.connected()
+    DBEntity.db_connect = mysql.connector.connect(host='localhost',
+                                                  user='root',
+                                                  database='Birthday_bot',
+                                                  password=MYSQLPASSWORD)
     bot.polling()
 
 
