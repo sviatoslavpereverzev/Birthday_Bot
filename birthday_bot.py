@@ -362,10 +362,10 @@ def callback_inline(call):
 def main():
     db = ConnectDb()
     db.connected()
-    DBEntity.db_connect = mysql.connector.connect(host='localhost',
-                                                  user='root',
-                                                  database='Birthday_bot',
-                                                  password=MYSQLPASSWORD)
+    # DBEntity.db_connect = mysql.connector.connect(host='localhost',
+    #                                               user='root',
+    #                                               database='Birthday_bot',
+    #                                               password=MYSQLPASSWORD)
     bot.polling()
 
 
