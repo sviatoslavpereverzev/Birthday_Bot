@@ -98,7 +98,7 @@ bot = telebot.TeleBot(TOKEN)
 # class DBEntity(object):
 #     db_connect = None
 
-class User(DBEntity):
+class User(object):
     def __init__(self, from_user):
         self.id = from_user.id
         self.is_bot = from_user.is_bot
@@ -106,13 +106,13 @@ class User(DBEntity):
         self.username = from_user.username
         self.last_name = from_user.last_name
         self.language_code = from_user.language_code
-
-    def save(self):
-        self.db_connect.query("")
-
-    @classmethod
-    def loadUser(cls, id):
-
+    #
+    # def save(self):
+    #     self.db_connect.query("")
+    #
+    # @classmethod
+    # def loadUser(cls, id):
+    #
     # data = self.db_connect.query()
     # loaded_user = cls(data)
     # return loaded_user
@@ -263,9 +263,9 @@ def all_birthdays(message):
 
 @bot.message_handler(commands=['week'])
 def week_birthdays(message):
-    user = User.loadUser(massage.from_user.id)
-    user.scenario_code = "1124232"
-    user.save()
+    # user = User.loadUser(massage.from_user.id)
+    # user.scenario_code = "1124232"
+    # user.save()
     bot.send_message(message.chat.id, 'Дни рождения на этой неделе:')
     bot.send_message(message.chat.id, 'Я пока это не умею, но скоро научусь😋')
 
