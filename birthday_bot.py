@@ -9,95 +9,6 @@ from mysql.connector import Error
 bot = telebot.TeleBot(TOKEN)
 
 
-# class ScenarioPoint(object):
-#     command = None
-#     next = []
-#     is_finish = False
-#     start_points = [AddName, DeleteRecord]
-#
-#     def run(self):
-#         pass
-#
-#     @classmethod
-#     def findPoint(cls, code):  # 11432
-#         current_scenario = cls.start_points[int(code[0])]  # -> AddName
-#         i = 0
-#         while (i < len(code)):
-#             code_i = int(i)
-#             current_scenario = current_scenario.next[code_i]  # -> AddMonth
-#         return current_scenario  # AddMonth
-#
-#
-# class AddName(ScenarioPoint):
-#     command = "/add"
-#     next = [AddMonth]
-#
-#     def run(self, user, message, metadata={}):
-#         record = Record()
-#         record.name = message
-#         record.save()
-#         metadata["record_id"] = record.id
-#         return metadata
-#
-#
-# class AddMonth(ScenarioPoint):
-#     next = [AddDay]
-#
-#     def run(self, user, message, metadata={}):
-#         record = Record.load(metadata["record_id"])
-#         record.month = message
-#         record.save()
-#         return metadata
-#
-#
-# class DeleteRecord(ScenarioPoint):
-#     command = "/delete"
-#
-#     def __init__(self, next):
-#         self.next = [ChooseRecord([DeleteConfirm()])]
-#
-#     def run(self, user, message, metadata={}):
-#         record = Record.load(metadata["record_id"])
-#         record.month = message
-#         record.save()
-#         return metadata
-#
-#
-# class ChooseRecord(ScenarioPoint):
-#
-#     def __init__(self, next):
-#         self.next = next
-#
-#     def run(self, user, message, metadata={}):
-#         record = Record.load(metadata["record_id"])
-#         record.month = message
-#         record.save()
-#         return metadata
-#
-#
-# class DeletingConfirm(ScenarioPoint):
-#     next = [AddDay]
-#
-#     def run(self, user, message, metadata={}):
-#         record = Record.load(metadata["record_id"])
-#         record.month = message
-#         record.save()
-#         return metadata
-#
-#
-# class EditRecord(ScenarioPoint):
-#     next = [ChooseRecord]
-#
-#     def run(self, user, message, metadata={}):
-#         record = Record.load(metadata["record_id"])
-#         record.month = message
-#         record.save()
-#         return metadata
-
-
-# class DBEntity(object):
-#     db_connect = None
-
 class User(object):
     def __init__(self, from_user):
         self.id = from_user.id
@@ -106,16 +17,7 @@ class User(object):
         self.username = from_user.username
         self.last_name = from_user.last_name
         self.language_code = from_user.language_code
-    #
-    # def save(self):
-    #     self.db_connect.query("")
-    #
-    # @classmethod
-    # def loadUser(cls, id):
-    #
-    # data = self.db_connect.query()
-    # loaded_user = cls(data)
-    # return loaded_user
+
 
     def get_user_info(self):
         user_info = {'id': self.id, 'is_bot': self.is_bot, 'first_name': self.first_name, 'username': self.username,
