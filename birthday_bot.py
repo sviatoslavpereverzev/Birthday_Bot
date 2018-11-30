@@ -129,18 +129,19 @@ class ConnectDb(object):
 
 @bot.message_handler(commands=['start'])
 def start(message):
-    global user, db
-    user = User(message.from_user)
-    db = ConnectDb()
-    db.connected()
-    user_info = user.get_user_info()
-    if db.is_there_a_user(user_info['id']):
-        db.create_user_db(user.get_user_id())
-        db.add_user_in_table_users(user_info)
-
-    db.close_connect()
+    # global user, db
+    # user = User(message.from_user)
+    # db = ConnectDb()
+    # db.connected()
+    # user_info = user.get_user_info()
+    # if db.is_there_a_user(user_info['id']):
+    #     db.create_user_db(user.get_user_id())
+    #     db.add_user_in_table_users(user_info)
+    #
+    # db.close_connect()
     bot.send_message(message.chat.id,
                      'Привет, {} {} 👋'.format(message.from_user.first_name, message.from_user.last_name))
+
 
 
 @bot.message_handler(commands=['commands'])
@@ -151,16 +152,16 @@ def commands(message):
 
 @bot.message_handler(commands=['all'])
 def all_birthdays(message):
-    global user, db
-    user = User(message.from_user)
-    db = ConnectDb()
-    db.connected()
-    bot.send_message(message.chat.id, 'Все дни рождения:')
-    birthdays = db.get_birthday()
-    for result in birthdays:
-        bot.send_message(message.chat.id,
-                         '{}'.format(
-                             str(result).replace(',', '').replace("'", '').replace('(', '').replace(')', '')))
+    # global user, db
+    # user = User(message.from_user)
+    # db = ConnectDb()
+    # db.connected()
+    # bot.send_message(message.chat.id, 'Все дни рождения:')
+    # birthdays = db.get_birthday()
+    # for result in birthdays:
+    #     bot.send_message(message.chat.id,
+    #                      '{}'.format(
+    #                          str(result).replace(',', '').replace("'", '').replace('(', '').replace(')', '')))
 
 
 @bot.message_handler(commands=['week'])
@@ -180,14 +181,16 @@ def month_birthdays(message):
 
 @bot.message_handler(commands=['add'])
 def add_user(message):
-    global user, db
-    try:
-        # get user scenario status from db or Global Static Config Class
-        user.set_add_new_user(True)
-    except NameError:
-        user = User(message.from_user)
-        # db = ConnectDb()
-        user.set_add_new_user(True)
+    # global user, db
+    # try:
+    #     # get user scenario status from db or Global Static Config Class
+    #     user.set_add_new_user(True)
+    # except NameError:
+    #     user = User(message.from_user)
+    #     # db = ConnectDb()
+    #     user.set_add_new_user(True)
+
+
 
     bot.send_message(message.chat.id, 'Добавим нового именинника: \nНапиши кто именинник?')
 
@@ -262,8 +265,8 @@ def callback_inline(call):
 
 
 def main():
-    db = ConnectDb()
-    db.connected()
+    # db = ConnectDb()
+    # db.connected()
     # DBEntity.db_connect = mysql.connector.connect(host='localhost',
     #                                               user='root',
     #                                               database='Birthday_bot',
