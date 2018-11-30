@@ -204,9 +204,9 @@ def delete_user(message):
 @bot.message_handler(content_types=['text'])
 def last_updates(message):
     user = User.loadUser(id)
-    scenario_code, metadata = user.get_context()
-    scenario = ScenarioPoint.findPoint(scenario_code)
-    scenario.run(user, message, metadata)
+    # scenario_code, metadata = user.get_context()
+    # scenario = ScenarioPoint.findPoint(scenario_code)
+    # scenario.run(user, message, metadata)
 
     # global user, db
     # user.set_last_update(message.text)
