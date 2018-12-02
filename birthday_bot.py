@@ -266,8 +266,6 @@ def callback_inline(call):
     elif command == 'month':
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text='Месяц: {}'.format(call.data.split('_')[-1]))
-        print(call.data.split('_'))
-        print(call.message.chat.id)
         db.set_addition_data('month_int', call.data.split('_')[1], call.message.chat.id)
         db.set_addition_data('month_str', call.data.split('_')[2], call.message.chat.id)
         keyboards.keyboard_day(call.message, 'В какой день?', call.data.split('_')[1], bot)
@@ -275,7 +273,6 @@ def callback_inline(call):
     elif command == 'day':
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                               text='День: {}'.format(value))
-        print(call.data.split('_')[1])
         db.set_addition_data('day', call.data.split('_')[1], call.message.chat.id)
 
         user_add = 'Именинник: {}, месяц: {}, день: {}\n'.format(db.get_addition_data(call.message.chat.id)['name'],
