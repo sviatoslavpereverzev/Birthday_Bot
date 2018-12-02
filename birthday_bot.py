@@ -18,7 +18,6 @@ class User(object):
         self.last_name = from_user.last_name
         self.language_code = from_user.language_code
 
-
     def get_user_info(self):
         user_info = {'id': self.id, 'is_bot': self.is_bot, 'first_name': self.first_name, 'username': self.username,
                      'last_name': self.last_name, 'language_code': self.language_code}
@@ -71,16 +70,20 @@ class User(object):
 
 class ConnectDb(object):
     def connected(self):
+        self.db = mysql.connector.connect(host='localhost',
+                                          user='root',
+                                          database='Birthday_bot',
+                                          password=MYSQLPASSWORD)
+
         try:
-            self.db = None
             if self.db.is_connected():
                 print('Connected to MySQL database')
 
         except Error as e:
             print(e)
 
-    def close_connect(self):
-        self.db.close()
+    # def close_connect(self):
+    #     self.db.close()
 
     def is_there_a_user(self, id):
         sql_select_user = 'SELECT * FROM Users_Birthday_bot WHERE id = {}'.format(id)
@@ -89,14 +92,15 @@ class ConnectDb(object):
         myresult = mycursor.fetchall()
         if not myresult:
             print('Нет такого')
-            return True
+            return False
         print(myresult)
-        return False
+        return True
 
-    def add_user_in_table_users(self, user_info):
+    def add_user_in_table_users(self, message):
         sql_add_user = 'INSERT INTO Users_Birthday_bot (first_name, last_name, id, username, is_bot, language_code) VALUES (%s, %s, %s, %s, %s, %s)'
-        user = (user_info['first_name'], user_info['last_name'], user_info['id'], user_info['username'],
-                user_info['is_bot'], user_info['language_code'])
+        user = (
+        message.from_user.first_name, message.from_user.last_name, message.from_user.id, message.from_user.username,
+        message.from_user.is_bot, message.from_user.language_code)
         mycursor = self.db.cursor()
         mycursor.execute(sql_add_user, user)
         self.db.commit()
@@ -127,21 +131,17 @@ class ConnectDb(object):
             print('Таблица id_{} уже есть!'.format(id))
 
 
+db = ConnectDb()
+db.connected()
+
+
 @bot.message_handler(commands=['start'])
 def start(message):
-    # global user, db
-    # user = User(message.from_user)
-    # db = ConnectDb()
-    # db.connected()
-    # user_info = user.get_user_info()
-    # if db.is_there_a_user(user_info['id']):
-    #     db.create_user_db(user.get_user_id())
-    #     db.add_user_in_table_users(user_info)
-    #
-    # db.close_connect()
+    if db.is_there_a_user(message.from_user.id) is False:
+        db.add_user_in_table_users(message)
+
     bot.send_message(message.chat.id,
                      'Привет, {} {} 👋'.format(message.from_user.first_name, message.from_user.last_name))
-
 
 
 @bot.message_handler(commands=['commands'])
@@ -152,6 +152,7 @@ def commands(message):
 
 @bot.message_handler(commands=['all'])
 def all_birthdays(message):
+    pass
     # global user, db
     # user = User(message.from_user)
     # db = ConnectDb()
@@ -166,9 +167,6 @@ def all_birthdays(message):
 
 @bot.message_handler(commands=['week'])
 def week_birthdays(message):
-    # user = User.loadUser(massage.from_user.id)
-    # user.scenario_code = "1124232"
-    # user.save()
     bot.send_message(message.chat.id, 'Дни рождения на этой неделе:')
     bot.send_message(message.chat.id, 'Я пока это не умею, но скоро научусь😋')
 
@@ -190,8 +188,6 @@ def add_user(message):
     #     # db = ConnectDb()
     #     user.set_add_new_user(True)
 
-
-
     bot.send_message(message.chat.id, 'Добавим нового именинника: \nНапиши кто именинник?')
 
 
@@ -203,26 +199,27 @@ def delete_user(message):
 
 @bot.message_handler(content_types=['text'])
 def last_updates(message):
-    user = User.loadUser(id)
+    # user = User.loadUser(id)
     # scenario_code, metadata = user.get_context()
     # scenario = ScenarioPoint.findPoint(scenario_code)
     # scenario.run(user, message, metadata)
 
-    # global user, db
-    # user.set_last_update(message.text)
-    # if user.get_add_new_user():
-    #     user.set_add_new_user(False)
-    #     user.set_add_user_name(user.get_last_update())
-    #     bot.send_message(message.chat.id, 'Именинник: {}'.format(user.get_add_user_name()))
-    #     keyboards.keyboard_month(message, 'В каком месяце родился?', bot)
-    # else:
-    #     bot.send_message(message.chat.id, 'Я не знаю что ты от меня хочешь 😓\nВот что я умею:')
-    #     start(message)
+    global user, db
+    user.set_last_update(message.text)
+    if user.get_add_new_user():
+        user.set_add_new_user(False)
+        user.set_add_user_name(user.get_last_update())
+        bot.send_message(message.chat.id, 'Именинник: {}'.format(user.get_add_user_name()))
+        keyboards.keyboard_month(message, 'В каком месяце родился?', bot)
+    else:
+        bot.send_message(message.chat.id, 'Я не знаю что ты от меня хочешь 😓\nВот что я умею:')
+        start(message)
 
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
     global user, db
+    print(call.data)
     command = call.data.split('_')[0]
     value = call.data.split('_')[1]
     if command == 'answer':
@@ -267,7 +264,7 @@ def callback_inline(call):
 def main():
     # db = ConnectDb()
     # db.connected()
-    # DBEntity.db_connect = mysql.connector.connect(host='localhost',
+    # db_connect = mysql.connector.connect(host='localhost',
     #                                               user='root',
     #                                               database='Birthday_bot',
     #                                               password=MYSQLPASSWORD)
