@@ -86,9 +86,9 @@ class ConnectDb(object):
     #     self.db.close()
 
     def is_there_a_user(self, id):
-        sql_select_user = 'SELECT * FROM Users_Birthday_bot WHERE id = {}'.format(id)
+        sql = 'SELECT * FROM Users_Birthday_bot WHERE id = {}'.format(id)
         mycursor = self.db.cursor()
-        mycursor.execute(sql_select_user)
+        mycursor.execute(sql)
         myresult = mycursor.fetchall()
         if not myresult:
             print('Нет такого')
@@ -97,12 +97,33 @@ class ConnectDb(object):
         return True
 
     def add_user_in_table_users(self, info):
-        sql_add_user = 'INSERT INTO Users_Birthday_bot (first_name, last_name, id, username, is_bot, language_code) VALUES (%s, %s, %s, %s, %s, %s)'
+        sql = 'INSERT INTO Users_Birthday_bot (first_name, last_name, id, username, is_bot, language_code) VALUES (%s, %s, %s, %s, %s, %s)'
         user = (info.first_name, info.last_name, info.id, info.username, info.is_bot, info.language_code)
         mycursor = self.db.cursor()
-        mycursor.execute(sql_add_user, user)
+        mycursor.execute(sql, user)
         self.db.commit()
         return True
+
+    def add_user_in_addition_data(self, id):
+        sql = 'INSERT INTO Addition_data (id, add_user) VALUES ({}, False)'.format(id)
+        mycursor = self.db.cursor()
+        mycursor.execute(sql, user)
+        self.db.commit()
+        return True
+
+    def set_add_user_in_addition_data(self, value, id):
+        sql = 'UPDATE Addition_data SET add_user = {} WHERE id = {}'.format(value, id)
+        mycursor = self.db.cursor()
+        mycursor.execute(sql)
+        self.db.commit()
+        return True
+
+    def get_add_user_in_addition_data(self, id):
+        sql = 'SELECT  add_user FROM Addition_data Where id = {}'.format(id)
+        mycursor = self.db.cursor()
+        mycursor.execute(sql)
+        myresult = mycursor.fetchone()
+        return bool(myresult[0])
 
     def add_birthday(self, user):
         mycursor = self.db.cursor()
@@ -119,14 +140,14 @@ class ConnectDb(object):
         myresult = mycursor.fetchall()
         return myresult
 
-    def create_user_db(self, id):
-        try:
-            mycursor = self.db.cursor()
-            sql = 'CREATE TABLE id_{} (name VARCHAR(255), month_int INTEGER(2), month_str VARCHAR(25), day INTEGER(2), year_of_birth INTEGER(4), remind_month BOOL DEFAULT 0, remind_week BOOL DEFAULT 0, remind_day BOOL DEFAULT 0)'.format(
-                id)
-            mycursor.execute(sql)
-        except mysql.connector.errors.ProgrammingError:
-            print('Таблица id_{} уже есть!'.format(id))
+    # def create_user_db(self, id):
+    #     try:
+    #         mycursor = self.db.cursor()
+    #         sql = 'CREATE TABLE id_{} (name VARCHAR(255), month_int INTEGER(2), month_str VARCHAR(25), day INTEGER(2), year_of_birth INTEGER(4), remind_month BOOL DEFAULT 0, remind_week BOOL DEFAULT 0, remind_day BOOL DEFAULT 0)'.format(
+    #             id)
+    #         mycursor.execute(sql)
+    #     except mysql.connector.errors.ProgrammingError:
+    #         print('Таблица id_{} уже есть!'.format(id))
 
 
 db = ConnectDb()
@@ -137,6 +158,7 @@ db.connected()
 def start(message):
     if db.is_there_a_user(message.from_user.id) is False:
         db.add_user_in_table_users(message.from_user)
+        db.add_user_in_addition_data(message.from_user.id)
 
     bot.send_message(message.chat.id,
                      'Привет, {} {} 👋'.format(message.from_user.first_name, message.from_user.last_name))
@@ -177,6 +199,7 @@ def month_birthdays(message):
 
 @bot.message_handler(commands=['add'])
 def add_user(message):
+    db.set_add_user_in_addition_data(True, message.from_user.id)
     # global user, db
     # try:
     #     # get user scenario status from db or Global Static Config Class
@@ -202,16 +225,17 @@ def last_updates(message):
     # scenario = ScenarioPoint.findPoint(scenario_code)
     # scenario.run(user, message, metadata)
 
-    global user, db
-    user.set_last_update(message.text)
-    if user.get_add_new_user():
-        user.set_add_new_user(False)
-        user.set_add_user_name(user.get_last_update())
-        bot.send_message(message.chat.id, 'Именинник: {}'.format(user.get_add_user_name()))
+    # global user, db
+    # user.set_last_update(message.text)
+    if db.get_add_user_in_addition_data(message.from_user.id):
+        db.set_add_user_in_addition_data(False, message.from_user.id)
+        print(message.text)
+    #     user.set_add_user_name(user.get_last_update())
+        bot.send_message(message.chat.id, 'Именинник: {}'.format(message.text))
         keyboards.keyboard_month(message, 'В каком месяце родился?', bot)
-    else:
-        bot.send_message(message.chat.id, 'Я не знаю что ты от меня хочешь 😓\nВот что я умею:')
-        start(message)
+    # else:
+    #     bot.send_message(message.chat.id, 'Я не знаю что ты от меня хочешь 😓\nВот что я умею:')
+    #     start(message)
 
 
 @bot.callback_query_handler(func=lambda call: True)
