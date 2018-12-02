@@ -118,18 +118,33 @@ class ConnectDb(object):
         self.db.commit()
         return True
 
-    def get_add_user_in_addition_data(self, id):
-        sql = 'SELECT  add_user FROM Addition_data Where id = {}'.format(id)
+    def get_addition_data(self, id):
+        sql = 'SELECT  * FROM Addition_data Where id = {}'.format(id)
         mycursor = self.db.cursor()
         mycursor.execute(sql)
         myresult = mycursor.fetchone()
-        return bool(myresult[0])
+        result = {}
+        result['id'] = myresult[0]
+        result['add_user'] = myresult[1]
+        result['name'] = myresult[2]
+        result['month_int'] = myresult[3]
+        result['month_str'] = myresult[4]
+        result['day'] = myresult[5]
+        result['year_of_birth'] = myresult[6]
+        result['next_function'] = myresult[7]
+        return result
 
-    def add_birthday(self, user):
+    # def get_addition_data(self, id):
+    #     sql = 'SELECT  add_user FROM Addition_data Where id = {}'.format(id)
+    #     mycursor = self.db.cursor()
+    #     mycursor.execute(sql)
+    #     myresult = mycursor.fetchone()
+
+    def add_birthday(self, id):
+        birthday = db.get_addition_data(id)
+        sql = 'INSERT INTO Birthdays (id, name, month_int, month_str, day) VALUES (%s, %s, %s, %s, %s)'
         mycursor = self.db.cursor()
-        sql = 'INSERT INTO id_{} (name, month_int, month_str, day) VALUES (%s, %s, %s, %s)'.format(user.get_user_id())
-        user = (user.get_add_user_name(), int(user.get_add_user_month()[0]), user.get_add_user_month()[1],
-                int(user.get_add_user_date()))
+        user = (birthday['id'], birthday['name'], birthday['month_int'], birthday['month_str'], birthday['day'])
         mycursor.execute(sql, user)
         self.db.commit()
 
@@ -199,9 +214,7 @@ def month_birthdays(message):
 
 @bot.message_handler(commands=['add'])
 def add_user(message):
-    print(db.get_add_user_in_addition_data(message.from_user.id))
     db.set_addition_data('add_user', '1', message.from_user.id)
-    print(db.get_add_user_in_addition_data(message.from_user.id))
     # global user, db
     # try:
     #     # get user scenario status from db or Global Static Config Class
@@ -222,11 +235,12 @@ def delete_user(message):
 
 @bot.message_handler(content_types=['text'])
 def last_updates(message):
-    if db.get_add_user_in_addition_data(message.from_user.id):
+    if bool(db.get_addition_data(message.from_user.id)['add_user']):
         db.set_addition_data('add_user', '0', message.from_user.id)
         db.set_addition_data('name', message.text, message.from_user.id)
         bot.send_message(message.chat.id, 'Именинник: {}'.format(message.text))
         keyboards.keyboard_month(message, 'В каком месяце родился?', bot)
+
     else:
         bot.send_message(message.chat.id, 'Я не знаю что ты от меня хочешь 😓\nВот что я умею:')
         commands(message)
@@ -234,24 +248,14 @@ def last_updates(message):
 
 @bot.callback_query_handler(func=lambda call: True)
 def callback_inline(call):
-    global user, db
-    print(call.data)
     command = call.data.split('_')[0]
     value = call.data.split('_')[1]
     if command == 'answer':
         if value == 'yes':
-            # db = ConnectDb()
-            try:
-                db.connected()
-                db.add_birthday(user)
+                db.add_birthday(call.message.chat.id)
                 bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                       text='Добавил 😌')
-            except NameError:
-                db = ConnectDb()
-                db.connected()
-                db.add_birthday(user)
-                bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
-                                      text='Добавил 😌')
+
 
         elif value == 'no':
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
@@ -274,9 +278,10 @@ def callback_inline(call):
         print(call.data.split('_')[1])
         db.set_addition_data('day', call.data.split('_')[1], call.message.chat.id)
 
-        user_add = 'Именинник: {}, месяц: {}, день: {}\n'.format(user.get_add_user_name(),
-                                                                 user.get_add_user_month()[1],
-                                                                 user.get_add_user_date())
+        user_add = 'Именинник: {}, месяц: {}, день: {}\n'.format(db.get_addition_data(call.message.chat.id)['name'],
+                                                                 db.get_addition_data(call.message.chat.id)[
+                                                                     'month_str'],
+                                                                 db.get_addition_data(call.message.chat.id)['day'])
 
         keyboards.keyboard_y_or_n(call.message, (user_add, 'Все правильно? Добавляем?'), bot)
 
