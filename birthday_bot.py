@@ -96,11 +96,9 @@ class ConnectDb(object):
         print(myresult)
         return True
 
-    def add_user_in_table_users(self, message):
+    def add_user_in_table_users(self, info):
         sql_add_user = 'INSERT INTO Users_Birthday_bot (first_name, last_name, id, username, is_bot, language_code) VALUES (%s, %s, %s, %s, %s, %s)'
-        user = (
-        message.from_user.first_name, message.from_user.last_name, message.from_user.id, message.from_user.username,
-        message.from_user.is_bot, message.from_user.language_code)
+        user = (info.first_name, info.last_name, info.id, info.username, info.is_bot, info.language_code)
         mycursor = self.db.cursor()
         mycursor.execute(sql_add_user, user)
         self.db.commit()
@@ -138,7 +136,7 @@ db.connected()
 @bot.message_handler(commands=['start'])
 def start(message):
     if db.is_there_a_user(message.from_user.id) is False:
-        db.add_user_in_table_users(message)
+        db.add_user_in_table_users(message.from_user)
 
     bot.send_message(message.chat.id,
                      'Привет, {} {} 👋'.format(message.from_user.first_name, message.from_user.last_name))
