@@ -15,16 +15,12 @@ class ConnectDb(object):
                                           user='root',
                                           database='Birthday_bot',
                                           password=MYSQLPASSWORD)
-
         try:
             if self.db.is_connected():
                 print('Connected to MySQL database')
 
         except Error as e:
             print(e)
-
-    # def close_connect(self):
-    #     self.db.close()
 
     def is_there_a_user(self, id):
         sql = 'SELECT * FROM Users_Birthday_bot WHERE id = {}'.format(id)
@@ -74,12 +70,6 @@ class ConnectDb(object):
         result['year_of_birth'] = myresult[6]
         result['next_function'] = myresult[7]
         return result
-
-    # def get_addition_data(self, id):
-    #     sql = 'SELECT  add_user FROM Addition_data Where id = {}'.format(id)
-    #     mycursor = self.db.cursor()
-    #     mycursor.execute(sql)
-    #     myresult = mycursor.fetchone()
 
     def add_birthday(self, id):
         birthday = db.get_addition_data(id)
@@ -152,7 +142,7 @@ def delete_user(message):
 
 
 @bot.message_handler(content_types=['text'])
-def last_updates(message):
+def text(message):
     if bool(db.get_addition_data(message.from_user.id)['add_user']):
         db.set_addition_data('add_user', '0', message.from_user.id)
         db.set_addition_data('name', message.text, message.from_user.id)
@@ -202,12 +192,6 @@ def callback_inline(call):
 
 
 def main():
-    # db = ConnectDb()
-    # db.connected()
-    # db_connect = mysql.connector.connect(host='localhost',
-    #                                               user='root',
-    #                                               database='Birthday_bot',
-    #                                               password=MYSQLPASSWORD)
     bot.polling()
 
 
