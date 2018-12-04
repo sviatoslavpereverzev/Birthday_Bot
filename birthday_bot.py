@@ -3,6 +3,7 @@ import telebot
 import keyboards
 import mysql.connector
 from mysql.connector import Error
+import datetime
 
 # import time
 
@@ -79,13 +80,22 @@ class ConnectDb(object):
         mycursor.execute(sql, user)
         self.db.commit()
 
-    def get_birthday(self, id):
-        sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {}'.format(id)
+    def get_birthday(self, filter, id):
+        if filter == 'all':
+            sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {}'.format(id)
+        else:
+            month = datetime.date.today().month
+            today = datetime.date.today().day
+            if filter == 'week':
+                sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} AND month_int = {} AND day BETWEEN {} and {}'.format(
+                    id, month, today, today + 7)
+            else:
+                sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} AND month_int = {}'.format(id, month)
+
         mycursor = self.db.cursor()
         mycursor.execute(sql)
         myresult = mycursor.fetchall()
         return myresult
-
 
 
 db = ConnectDb()
@@ -110,7 +120,7 @@ def commands(message):
 
 @bot.message_handler(commands=['all'])
 def all_birthdays(message):
-    birthdays = db.get_birthday(message.from_user.id)
+    birthdays = db.get_birthday('all', message.from_user.id)
     for result in birthdays:
         bot.send_message(message.chat.id,
                          '{}'.format(
@@ -119,14 +129,22 @@ def all_birthdays(message):
 
 @bot.message_handler(commands=['week'])
 def week_birthdays(message):
-    bot.send_message(message.chat.id, 'Дни рождения на этой неделе:')
-    bot.send_message(message.chat.id, 'Я пока это не умею, но скоро научусь😋')
+    bot.send_message(message.chat.id, 'Дни рождения на ближайшие 7 дней:')
+    birthdays = db.get_birthday('week', message.from_user.id)
+    for result in birthdays:
+        bot.send_message(message.chat.id,
+                         '{}'.format(
+                             str(result).replace(',', '').replace("'", '').replace('(', '').replace(')', '')))
 
 
 @bot.message_handler(commands=['month'])
 def month_birthdays(message):
     bot.send_message(message.chat.id, 'Дни рождения в этом месяце:')
-    bot.send_message(message.chat.id, 'Я пока это не умею, но скоро научусь😋')
+    birthdays = db.get_birthday('month', message.from_user.id)
+    for result in birthdays:
+        bot.send_message(message.chat.id,
+                         '{}'.format(
+                             str(result).replace(',', '').replace("'", '').replace('(', '').replace(')', '')))
 
 
 @bot.message_handler(commands=['add'])
