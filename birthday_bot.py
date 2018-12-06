@@ -79,6 +79,7 @@ class ConnectDb(object):
         user = (birthday['id'], birthday['name'], birthday['month_int'], birthday['month_str'], birthday['day'])
         mycursor.execute(sql, user)
         self.db.commit()
+        return True
 
     def get_birthday(self, filter, id):
         if filter == 'all':
@@ -96,6 +97,13 @@ class ConnectDb(object):
         mycursor.execute(sql)
         myresult = mycursor.fetchall()
         return myresult
+
+    def deletr_birhday(self, name, id):
+        sql = 'DELETE FROM Birthdays WHERE id = {} AND name = {}'.format(id, name)
+        mycursor = self.db.cursor()
+        mycursor.execute(sql)
+        self.db.commit()
+        return True
 
 
 db = ConnectDb()
