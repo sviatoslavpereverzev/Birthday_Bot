@@ -5,8 +5,6 @@ import mysql.connector
 from mysql.connector import Error
 import datetime
 
-# import time
-
 bot = telebot.TeleBot(TOKEN)
 
 
@@ -163,7 +161,7 @@ def add_user(message):
 
 @bot.message_handler(commands=['delete'])
 def delete_user(message):
-    bot.send_message(message.chat.id, 'Удаляем лишнее:')
+    bot.send_message(message.chat.id, 'Удаляем лишнее: \nНапиши имя иммениника')
     bot.send_message(message.chat.id, 'Я пока это не умею, но скоро научусь😋')
 
 
