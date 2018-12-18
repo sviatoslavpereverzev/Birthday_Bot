@@ -126,11 +126,34 @@ def commands(message):
 
 @bot.message_handler(commands=['all'])
 def all_birthdays(message):
+    # from telebot import types
+    # markup = types.ReplyKeyboardMarkup(row_width=2)
+    # itembtn1 = types.KeyboardButton('next')
+    # markup.add(itembtn1)
+    # bot.send_message(message.chat.id, " сюда вывожу все фамилии\nChoose one letter:", reply_markup=markup)
     birthdays = db.get_birthday('all', message.from_user.id)
-    for result in birthdays:
-        bot.send_message(message.chat.id,
-                         '{}'.format(
-                             str(result).replace(',', '').replace("'", '').replace('(', '').replace(')', '')))
+    if len(birthdays) <= 5:
+        for result in birthdays:
+            bot.send_message(message.chat.id,
+                             '{}'.format(
+                                 str(result).replace(',', '').replace("'", '').replace('(', '').replace(')', '')))
+    else:
+        print('Ok')
+        long = len(birthdays)
+        print(long)
+        text2 = ''
+        print(birthdays[1])
+
+        for i in range(10):
+            birthdays[i] = str(birthdays[i]).replace(',', '').replace("'", '').replace('(', '').replace(')', '')
+            text2 = (text2 + birthdays[i] + '\n')
+        print(text2)
+        from telebot import types
+        markup = types.ReplyKeyboardMarkup(row_width=2)
+        itembtn1 = types.KeyboardButton('next>>')
+        markup.add(itembtn1)
+        bot.send_message(message.chat.id, '{}'.format(text2), reply_markup=markup)
+        # bot.send_message(message.chat.id, text2)
 
 
 @bot.message_handler(commands=['week'])
