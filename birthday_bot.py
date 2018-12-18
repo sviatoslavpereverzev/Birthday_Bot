@@ -138,16 +138,12 @@ def all_birthdays(message):
                              '{}'.format(
                                  str(result).replace(',', '').replace("'", '').replace('(', '').replace(')', '')))
     else:
-        print('Ok')
         long = len(birthdays)
-        print(long)
         text2 = ''
         print(birthdays[1])
-
         for i in range(10):
             birthdays[i] = str(birthdays[i]).replace(',', '').replace("'", '').replace('(', '').replace(')', '')
-            text2 = (text2 + birthdays[i] + '\n')
-        print(text2)
+            text2 = text2 + str(i + 1) + '. ' + birthdays[i] + '\n'
         from telebot import types
         markup = types.ReplyKeyboardMarkup(row_width=2)
         itembtn1 = types.KeyboardButton('next>>')
