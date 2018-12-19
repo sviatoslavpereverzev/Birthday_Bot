@@ -125,12 +125,7 @@ def commands(message):
 
 
 @bot.message_handler(commands=['all'])
-def all_birthdays(message, next=0):
-    # from telebot import types
-    # markup = types.ReplyKeyboardMarkup(row_width=2)
-    # itembtn1 = types.KeyboardButton('next')
-    # markup.add(itembtn1)
-    # bot.send_message(message.chat.id, " сюда вывожу все фамилии\nChoose one letter:", reply_markup=markup)
+def all_birthdays(message):
     birthdays = db.get_birthday('all', 0, message.from_user.id)
     text2 = ''
     q = 0
@@ -140,14 +135,7 @@ def all_birthdays(message, next=0):
         q += 1
 
     from telebot import types
-    # markup = types.ReplyKeyboardMarkup(row_width=2)
-    # itembtn1 = types.KeyboardButton('next>>')
-    # markup.add(itembtn1)
-    # bot.send_message(message.chat.id, '{}'.format(text2), reply_markup=markup)
-    # bot.send_message(message.chat.id, text2)
-    next_birthday = birthdays = db.get_birthday('all', 0+11, message.from_user.id)
-    print(next_birthday)
-    print(not next_birthday)
+    next_birthday = db.get_birthday('all', 0 + 11, message.from_user.id)
     if not next_birthday:
         bot.send_message(message.chat.id, text2)
     else:
@@ -239,33 +227,22 @@ def callback_inline(call):
         keyboards.keyboard_y_or_n(call.message, (user_add, 'Все правильно? Добавляем?'), bot)
     elif command == 'next':
         if call.data[5:] == 'all_birthdays':
-            print(call.from_user.id)
             birthdays = db.get_birthday('all', 10, call.from_user.id)
             text2 = ''
             q = 10
-            print(birthdays, 'sss')
             for birthday in birthdays:
                 birthd = str(birthday).replace(',', '').replace("'", '').replace('(', '').replace(')', '')
                 text2 = text2 + str(q + 1) + '. ' + birthd + '\n'
                 q += 1
-            from telebot import types
-            # markup = types.ReplyKeyboardMarkup(row_width=2)
-            # itembtn1 = types.KeyboardButton('next>>')
-            # markup.add(itembtn1)
-            # bot.send_message(message.chat.id, '{}'.format(text2), reply_markup=markup)
-            # bot.send_message(message.chat.id, text2)
-            next_birthday = birthdays = db.get_birthday('all', 10 + 11, call.from_user.id)
-            print(next_birthday)
-            print(not next_birthday)
-            print(next_birthday)
+            next_birthday = db.get_birthday('all', 10 + 11, call.from_user.id)
             if not next_birthday:
                 bot.send_message(call.message.chat.id, text2)
             else:
+                from telebot import types
                 keyboard = types.InlineKeyboardMarkup()
                 button_yes = types.InlineKeyboardButton(text='Next>>', callback_data='next_{}'.format('all_birthdays'))
                 keyboard.add(button_yes)
                 bot.send_message(call.message.chat.id, text2, reply_markup=keyboard)
-
 
 
 def main():
