@@ -66,8 +66,7 @@ class ConnectDb(object):
         result['month_int'] = myresult[3]
         result['month_str'] = myresult[4]
         result['day'] = myresult[5]
-        result['year_of_birth'] = myresult[6]
-        result['next_function'] = myresult[7]
+        result['offset'] = myresult[6]
         return result
 
     def add_birthday(self, id):
@@ -103,6 +102,23 @@ class ConnectDb(object):
         self.db.commit()
         return True
 
+    def get_offset(self, id):
+        sql = 'SELECT offset FROM Addition_data Where id = {}'.format(id)
+        mycursor = self.db.cursor()
+        mycursor.execute(sql)
+        myresult = mycursor.fetchone()
+        offset = int(str(myresult).replace('(', '').replace(',', '').replace(')', ''))
+        return offset
+
+    def list_change(self, birthdays, offset):
+        birthdays_list = ''
+        offset
+        for birthday in birthdays:
+            birthday = str(birthday).replace(',', '').replace("'", '').replace('(', '').replace(')', '')
+            birthdays_list = birthdays_list + str(offset + 1) + '. ' + birthday + '\n'
+            offset += 1
+        return birthdays_list
+
 
 db = ConnectDb()
 db.connected()
@@ -127,22 +143,15 @@ def commands(message):
 @bot.message_handler(commands=['all'])
 def all_birthdays(message):
     birthdays = db.get_birthday('all', 0, message.from_user.id)
-    text2 = ''
-    q = 0
-    for birthday in birthdays:
-        birthd = str(birthday).replace(',', '').replace("'", '').replace('(', '').replace(')', '')
-        text2 = text2 + str(q + 1) + '. ' + birthd + '\n'
-        q += 1
-
-    from telebot import types
+    db.set_addition_data('offset', 0, message.from_user.id)
+    birthdays_list = db.list_change(birthdays, 0)
     next_birthday = db.get_birthday('all', 0 + 11, message.from_user.id)
     if not next_birthday:
-        bot.send_message(message.chat.id, text2)
+        bot.send_message(message.chat.id, birthdays_list)
     else:
-        keyboard = types.InlineKeyboardMarkup()
-        button_yes = types.InlineKeyboardButton(text='Next>>', callback_data='next_{}'.format('all_birthdays'))
-        keyboard.add(button_yes)
-        bot.send_message(message.chat.id, text2, reply_markup=keyboard)
+        offset = db.get_offset(message.from_user.id)
+        db.set_addition_data('offset', offset + 10, message.from_user.id)
+        keyboards.keybord_next(message, bot, birthdays_list)
 
 
 @bot.message_handler(commands=['week'])
@@ -179,6 +188,7 @@ def delete_user(message):
 
 @bot.message_handler(content_types=['text'])
 def text(message):
+    # try:
     if bool(db.get_addition_data(message.from_user.id)['add_user']):
         db.set_addition_data('add_user', '0', message.from_user.id)
         db.set_addition_data('name', message.text, message.from_user.id)
@@ -188,6 +198,10 @@ def text(message):
     else:
         bot.send_message(message.chat.id, 'Я не знаю что ты от меня хочешь 😓\nВот что я умею:')
         commands(message)
+    # except:
+    #     bot.send_message(message.chat.id, 'Чё это вообще такое? 😳\nВот что я умею:')
+    #     commands(message)
+
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -227,22 +241,16 @@ def callback_inline(call):
         keyboards.keyboard_y_or_n(call.message, (user_add, 'Все правильно? Добавляем?'), bot)
     elif command == 'next':
         if call.data[5:] == 'all_birthdays':
-            birthdays = db.get_birthday('all', 10, call.from_user.id)
-            text2 = ''
-            q = 10
-            for birthday in birthdays:
-                birthd = str(birthday).replace(',', '').replace("'", '').replace('(', '').replace(')', '')
-                text2 = text2 + str(q + 1) + '. ' + birthd + '\n'
-                q += 1
-            next_birthday = db.get_birthday('all', 10 + 11, call.from_user.id)
+            offset = db.get_offset(call.from_user.id)
+            birthdays = db.get_birthday('all', offset, call.from_user.id)
+            birthdays_list = db.list_change(birthdays, offset)
+            next_birthday = db.get_birthday('all', offset + 11, call.from_user.id)
             if not next_birthday:
-                bot.send_message(call.message.chat.id, text2)
+                bot.send_message(call.message.chat.id, birthdays_list)
             else:
-                from telebot import types
-                keyboard = types.InlineKeyboardMarkup()
-                button_yes = types.InlineKeyboardButton(text='Next>>', callback_data='next_{}'.format('all_birthdays'))
-                keyboard.add(button_yes)
-                bot.send_message(call.message.chat.id, text2, reply_markup=keyboard)
+                offset = db.get_offset(call.from_user.id)
+                db.set_addition_data('offset', offset + 10, call.from_user.id)
+                keyboards.keybord_next(call.message, bot, birthdays_list)
 
 
 def main():
