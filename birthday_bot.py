@@ -151,7 +151,7 @@ def all_birthdays(message):
     else:
         offset = db.get_offset(message.from_user.id)
         db.set_addition_data('offset', offset + 10, message.from_user.id)
-        keyboards.keybord_next(message, bot, birthdays_list)
+        keyboards.keybord_next(message, bot, birthdays_list, 'all_birthdays')
 
 
 @bot.message_handler(commands=['week'])
@@ -188,7 +188,6 @@ def delete_user(message):
 
 @bot.message_handler(content_types=['text'])
 def text(message):
-    # try:
     if bool(db.get_addition_data(message.from_user.id)['add_user']):
         db.set_addition_data('add_user', '0', message.from_user.id)
         db.set_addition_data('name', message.text, message.from_user.id)
@@ -198,10 +197,6 @@ def text(message):
     else:
         bot.send_message(message.chat.id, 'Я не знаю что ты от меня хочешь 😓\nВот что я умею:')
         commands(message)
-    # except:
-    #     bot.send_message(message.chat.id, 'Чё это вообще такое? 😳\nВот что я умею:')
-    #     commands(message)
-
 
 
 @bot.callback_query_handler(func=lambda call: True)
@@ -250,7 +245,7 @@ def callback_inline(call):
             else:
                 offset = db.get_offset(call.from_user.id)
                 db.set_addition_data('offset', offset + 10, call.from_user.id)
-                keyboards.keybord_next(call.message, bot, birthdays_list)
+                keyboards.keybord_next(call.message, bot, birthdays_list, 'all_birthdays')
 
 
 def main():

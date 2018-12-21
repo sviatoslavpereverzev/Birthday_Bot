@@ -54,14 +54,15 @@ def keyboard_command(message, bot):
     itembtn4 = types.KeyboardButton('/add')
     itembtn5 = types.KeyboardButton('/delete')
     markup.add(itembtn1, itembtn2, itembtn3, itembtn4, itembtn5)
-    bot.send_message(message.chat.id, 'Командуй!)', reply_markup=markup, )
+    bot.send_message(message.chat.id, 'Командуй!)', reply_markup=markup)
 
 
-def keybord_next(message, bot, birthdays_list):
+def keybord_next(message, bot, birthdays_list, function):
     keyboard = types.InlineKeyboardMarkup()
-    button_yes = types.InlineKeyboardButton(text='Next>>', callback_data='next_{}'.format('all_birthdays'))
-    keyboard.add(button_yes)
+    button_next = types.InlineKeyboardButton(text='Next>>', callback_data='next_{}'.format(function))
+    keyboard.add(button_next)
     bot.send_message(message.chat.id, birthdays_list, reply_markup=keyboard)
+
 
 def month_number(month):
     for season in MONTH:
