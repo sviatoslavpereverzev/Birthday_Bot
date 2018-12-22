@@ -78,24 +78,25 @@ class ConnectDb(object):
         self.db.commit()
         return True
 
-    def get_birthday(self, filter, offset, id):
-        if filter == 'all':
+    def get_birthday(self, sql_filter, offset, id):
+        if sql_filter == 'all':
             sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {}  LIMIT 10 OFFSET {}'.format(id, offset)
         else:
             month = datetime.date.today().month
             today = datetime.date.today().day
-            if filter == 'week':
-                sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} AND month_int = {} AND day BETWEEN {} and {}'.format(
-                    id, month, today, today + 7)
+            if sql_filter == 'week':
+                sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} AND month_int = {} AND day BETWEEN {} and {} LIMIT 10 OFFSET {}'.format(
+                    id, month, today, today + 7, offset)
             else:
-                sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} AND month_int = {}'.format(id, month)
+                sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} AND month_int = {} LIMIT 10 OFFSET {}'.format(
+                    id, month, offset)
 
         mycursor = self.db.cursor()
         mycursor.execute(sql)
         myresult = mycursor.fetchall()
         return myresult
 
-    def deletr_birhday(self, name, id):
+    def delete_birthday(self, name, id):
         sql = 'DELETE FROM Birthdays WHERE id = {} AND name = {}'.format(id, name)
         mycursor = self.db.cursor()
         mycursor.execute(sql)
@@ -112,12 +113,31 @@ class ConnectDb(object):
 
     def list_change(self, birthdays, offset):
         birthdays_list = ''
-        offset
         for birthday in birthdays:
             birthday = str(birthday).replace(',', '').replace("'", '').replace('(', '').replace(')', '')
             birthdays_list = birthdays_list + str(offset + 1) + '. ' + birthday + '\n'
             offset += 1
         return birthdays_list
+
+    def get_list_of_birthdays(self, message, sql_filter, user_id):
+        offset = db.get_offset(user_id)
+        birthdays = db.get_birthday(sql_filter, offset, user_id)
+        birthdays_list = db.list_change(birthdays, offset)
+        next_birthday = db.get_birthday(sql_filter, offset + 11, user_id)
+        if not next_birthday:
+            try:
+                bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id,
+                                      text=birthdays_list)
+            except:
+                bot.send_message(message.chat.id, birthdays_list)
+        else:
+            db.set_addition_data('offset', offset + 10, user_id)
+            keyboard = keyboards.keybord_next(sql_filter)
+            try:
+                bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id,
+                                      text=birthdays_list, reply_markup=keyboard)
+            except:
+                bot.send_message(message.chat.id, birthdays_list, reply_markup=keyboard)
 
 
 db = ConnectDb()
@@ -142,36 +162,22 @@ def commands(message):
 
 @bot.message_handler(commands=['all'])
 def all_birthdays(message):
-    birthdays = db.get_birthday('all', 0, message.from_user.id)
     db.set_addition_data('offset', 0, message.from_user.id)
-    birthdays_list = db.list_change(birthdays, 0)
-    next_birthday = db.get_birthday('all', 0 + 11, message.from_user.id)
-    if not next_birthday:
-        bot.send_message(message.chat.id, birthdays_list)
-    else:
-        offset = db.get_offset(message.from_user.id)
-        db.set_addition_data('offset', offset + 10, message.from_user.id)
-        keyboards.keybord_next(message, bot, birthdays_list, 'all_birthdays')
+    db.get_list_of_birthdays(message, 'all', message.from_user.id)
 
 
 @bot.message_handler(commands=['week'])
 def week_birthdays(message):
     bot.send_message(message.chat.id, 'Дни рождения на ближайшие 7 дней:')
-    birthdays = db.get_birthday('week', message.from_user.id)
-    for result in birthdays:
-        bot.send_message(message.chat.id,
-                         '{}'.format(
-                             str(result).replace(',', '').replace("'", '').replace('(', '').replace(')', '')))
+    db.set_addition_data('offset', 0, message.from_user.id)
+    db.get_list_of_birthdays(message, 'week', message.from_user.id)
 
 
 @bot.message_handler(commands=['month'])
 def month_birthdays(message):
     bot.send_message(message.chat.id, 'Дни рождения в этом месяце:')
-    birthdays = db.get_birthday('month', message.from_user.id)
-    for result in birthdays:
-        bot.send_message(message.chat.id,
-                         '{}'.format(
-                             str(result).replace(',', '').replace("'", '').replace('(', '').replace(')', '')))
+    db.set_addition_data('offset', 0, message.from_user.id)
+    db.get_list_of_birthdays(message, 'month', message.from_user.id)
 
 
 @bot.message_handler(commands=['add'])
@@ -235,17 +241,12 @@ def callback_inline(call):
 
         keyboards.keyboard_y_or_n(call.message, (user_add, 'Все правильно? Добавляем?'), bot)
     elif command == 'next':
-        if call.data[5:] == 'all_birthdays':
-            offset = db.get_offset(call.from_user.id)
-            birthdays = db.get_birthday('all', offset, call.from_user.id)
-            birthdays_list = db.list_change(birthdays, offset)
-            next_birthday = db.get_birthday('all', offset + 11, call.from_user.id)
-            if not next_birthday:
-                bot.send_message(call.message.chat.id, birthdays_list)
-            else:
-                offset = db.get_offset(call.from_user.id)
-                db.set_addition_data('offset', offset + 10, call.from_user.id)
-                keyboards.keybord_next(call.message, bot, birthdays_list, 'all_birthdays')
+        if call.data[5:] == 'all':
+            db.get_list_of_birthdays(call.message, 'all', call.from_user.id)
+        elif call.data[5:] == 'week':
+            db.get_list_of_birthdays(call.message, 'week', call.from_user.id)
+        elif call.data[5:] == 'month':
+            db.get_list_of_birthdays(call.message, 'month', call.from_user.id)
 
 
 def main():

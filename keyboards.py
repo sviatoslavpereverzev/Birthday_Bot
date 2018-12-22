@@ -57,11 +57,11 @@ def keyboard_command(message, bot):
     bot.send_message(message.chat.id, 'Командуй!)', reply_markup=markup)
 
 
-def keybord_next(message, bot, birthdays_list, function):
+def keybord_next(sql_filter):
     keyboard = types.InlineKeyboardMarkup()
-    button_next = types.InlineKeyboardButton(text='Next>>', callback_data='next_{}'.format(function))
+    button_next = types.InlineKeyboardButton(text='Next>>', callback_data='next_{}'.format(sql_filter))
     keyboard.add(button_next)
-    bot.send_message(message.chat.id, birthdays_list, reply_markup=keyboard)
+    return keyboard
 
 
 def month_number(month):
