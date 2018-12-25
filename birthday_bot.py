@@ -62,11 +62,12 @@ class ConnectDb(object):
         result = {}
         result['id'] = myresult[0]
         result['add_user'] = myresult[1]
-        result['name'] = myresult[2]
-        result['month_int'] = myresult[3]
-        result['month_str'] = myresult[4]
-        result['day'] = myresult[5]
-        result['offset'] = myresult[6]
+        result['delete_user'] = myresult[2]
+        result['name'] = myresult[3]
+        result['month_int'] = myresult[4]
+        result['month_str'] = myresult[5]
+        result['day'] = myresult[6]
+        result['offset'] = myresult[7]
         return result
 
     def add_birthday(self, id):
@@ -139,6 +140,42 @@ class ConnectDb(object):
             except:
                 bot.send_message(message.chat.id, birthdays_list, reply_markup=keyboard)
 
+    def get_birthdays_for_deletion(self, name, offset, user_id):
+        sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} and name REGEXP "{}" LIMIT 10 OFFSET {}'.format(
+            user_id, name, offset)
+        mycursor = self.db.cursor()
+        mycursor.execute(sql)
+        myresult = mycursor.fetchall()
+        return myresult
+
+    def get_list_of_birthdays_for_deletion(self, message, name, user_id):
+        offset = db.get_offset(user_id)
+        birthdays = db.get_birthdays_for_deletion(name, offset, user_id)
+        birthdays_list = db.list_change(birthdays, offset)
+        next_birthday = db.get_birthdays_for_deletion(name, offset + 11, user_id)
+        if not next_birthday:
+            if offset == 0 and not birthdays:
+                bot.send_message(message.chat.id, 'Я никого не нашел 🤷‍♂️')
+            else:
+                if len(birthdays) == 1:
+                    print(birthdays)
+                    print(birthdays_list)
+                    bot.send_message(message.chat.id, birthdays)
+                else:
+                    from telebot import types
+                    buttons = []
+                    keyboard = types.InlineKeyboardMarkup()
+                    for names in birthdays:
+                        print(names)
+                        birthday = str(names).replace(',', '').replace("'", '').replace('(', '').replace(')', '')
+                        text = str(offset + 1) + '. ' + birthday
+                        offset += 1
+                        print(text)
+                        buttons.append(types.InlineKeyboardButton(text=text, callback_data='delete_{}'.format(names[0])))
+                    for button in buttons:
+                        keyboard.add(button)
+                    bot.send_message(message.chat.id, 'Выбирай:', reply_markup=keyboard)
+
 
 db = ConnectDb()
 db.connected()
@@ -183,13 +220,16 @@ def month_birthdays(message):
 @bot.message_handler(commands=['add'])
 def add_user(message):
     db.set_addition_data('add_user', '1', message.from_user.id)
+    db.set_addition_data('delete_user', '0', message.from_user.id)
     bot.send_message(message.chat.id, 'Добавим нового именинника: \nНапиши кто именинник?')
 
 
 @bot.message_handler(commands=['delete'])
 def delete_user(message):
     bot.send_message(message.chat.id, 'Удаляем лишнее: \nНапиши имя иммениника')
-    bot.send_message(message.chat.id, 'Я пока это не умею, но скоро научусь😋')
+    db.set_addition_data('offset', 0, message.from_user.id)
+    db.set_addition_data('delete_user', '1', message.from_user.id)
+    db.set_addition_data('add_user', '0', message.from_user.id)
 
 
 @bot.message_handler(content_types=['text'])
@@ -199,6 +239,10 @@ def text(message):
         db.set_addition_data('name', message.text, message.from_user.id)
         bot.send_message(message.chat.id, 'Именинник: {}'.format(message.text))
         keyboards.keyboard_month(message, 'В каком месяце родился?', bot)
+
+    elif bool(db.get_addition_data(message.from_user.id)['delete_user']):
+        db.set_addition_data('delete_user', '0', message.from_user.id)
+        db.get_list_of_birthdays_for_deletion(message, message.text, message.from_user.id)
 
     else:
         bot.send_message(message.chat.id, 'Я не знаю что ты от меня хочешь 😓\nВот что я умею:')
@@ -247,6 +291,9 @@ def callback_inline(call):
             db.get_list_of_birthdays(call.message, 'week', call.from_user.id)
         elif call.data[5:] == 'month':
             db.get_list_of_birthdays(call.message, 'month', call.from_user.id)
+
+    elif command == 'delete':
+        print(value)
 
 
 def main():
