@@ -98,7 +98,7 @@ class ConnectDb(object):
         return myresult
 
     def delete_birthday(self, name, id):
-        sql = 'DELETE FROM Birthdays WHERE id = {} AND name = {}'.format(id, name)
+        sql = 'DELETE FROM Birthdays WHERE id = {} AND name = "{}"'.format(id, name)
         mycursor = self.db.cursor()
         mycursor.execute(sql)
         self.db.commit()
@@ -160,7 +160,7 @@ class ConnectDb(object):
                 if len(birthdays) == 1:
                     print(birthdays)
                     print(birthdays_list)
-                    bot.send_message(message.chat.id, birthdays)
+                    bot.send_message(message.chat.id, birthdays)#разобраться с тем, почеу не выводится все данные и сделать запрос на то, удалять или нет
                 else:
                     from telebot import types
                     buttons = []
@@ -293,8 +293,15 @@ def callback_inline(call):
             db.get_list_of_birthdays(call.message, 'month', call.from_user.id)
 
     elif command == 'delete':
-        print(value)
+        #сделать запрос на удаление
+        db.delete_birthday(value, call.from_user.id)
 
+    elif command == 'deleting':
+        if value == 'yes':
+            db.delete_birthday(value, call.from_user.id)
+            bot.send_message(call.message.chat.id, 'Удалил')
+        else:
+            bot.send_message(call.message.chat.id, 'Ok, оставляем')
 
 def main():
     bot.polling()

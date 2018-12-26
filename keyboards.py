@@ -63,6 +63,13 @@ def keybord_next(sql_filter):
     keyboard.add(button_next)
     return keyboard
 
+def keyboard_delete_y_or_n(message, text, bot):
+    keyboard = types.InlineKeyboardMarkup()
+    button_yes = types.InlineKeyboardButton(text='Удалить', callback_data='deleting_yes')
+    button_no = types.InlineKeyboardButton(text='Пожалуй оставлю', callback_data='deleting_no')
+    keyboard.add(button_yes, button_no)
+    bot.send_message(message.chat.id, text, reply_markup=keyboard)
+
 
 def month_number(month):
     for season in MONTH:
