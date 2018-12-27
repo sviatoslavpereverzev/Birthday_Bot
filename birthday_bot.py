@@ -202,7 +202,6 @@ def commands(message):
 
 @bot.message_handler(commands=['all'])
 def all_birthdays(message):
-    # Сделать выборку имен с сортировкой имени по алфавиту
     db.set_addition_data('offset', 0, message.from_user.id)
     db.get_list_of_birthdays(message, 'all', message.from_user.id)
 
