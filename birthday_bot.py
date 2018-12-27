@@ -21,8 +21,8 @@ class ConnectDb(object):
         except Error as e:
             print(e)
 
-    def is_there_a_user(self, id):
-        sql = 'SELECT * FROM Users_Birthday_bot WHERE id = {}'.format(id)
+    def is_there_a_user(self, user_id):
+        sql = 'SELECT * FROM Users_Birthday_bot WHERE id = {}'.format(user_id)
         mycursor = self.db.cursor()
         mycursor.execute(sql)
         myresult = mycursor.fetchall()
@@ -33,29 +33,30 @@ class ConnectDb(object):
         return True
 
     def add_user_in_table_users(self, info):
-        sql = 'INSERT INTO Users_Birthday_bot (first_name, last_name, id, username, is_bot, language_code) VALUES (%s, %s, %s, %s, %s, %s)'
+        sql = 'INSERT INTO Users_Birthday_bot (first_name, last_name, id, username, ' \
+              'is_bot, language_code) VALUES (%s, %s, %s, %s, %s, %s)'
         user = (info.first_name, info.last_name, info.id, info.username, info.is_bot, info.language_code)
         mycursor = self.db.cursor()
         mycursor.execute(sql, user)
         self.db.commit()
         return True
 
-    def add_user_in_addition_data(self, id):
-        sql = 'INSERT INTO Addition_data (id, add_user) VALUES ({}, False)'.format(id)
+    def add_user_in_addition_data(self, user_id):
+        sql = 'INSERT INTO Addition_data (id, add_user) VALUES ({}, False)'.format(user_id)
         mycursor = self.db.cursor()
         mycursor.execute(sql)
         self.db.commit()
         return True
 
-    def set_addition_data(self, column, value, id):
-        sql = 'UPDATE Addition_data SET {} = "{}" WHERE id = {}'.format(column, value, id)
+    def set_addition_data(self, column, value, user_id):
+        sql = 'UPDATE Addition_data SET {} = "{}" WHERE id = {}'.format(column, value, user_id)
         mycursor = self.db.cursor()
         mycursor.execute(sql)
         self.db.commit()
         return True
 
-    def get_addition_data(self, id):
-        sql = 'SELECT  * FROM Addition_data Where id = {}'.format(id)
+    def get_addition_data(self, user_id):
+        sql = 'SELECT  * FROM Addition_data Where id = {}'.format(user_id)
         mycursor = self.db.cursor()
         mycursor.execute(sql)
         myresult = mycursor.fetchone()
@@ -70,8 +71,8 @@ class ConnectDb(object):
         result['offset'] = myresult[7]
         return result
 
-    def add_birthday(self, id):
-        birthday = db.get_addition_data(id)
+    def add_birthday(self, user_id):
+        birthday = db.get_addition_data(user_id)
         sql = 'INSERT INTO Birthdays (id, name, month_int, month_str, day) VALUES (%s, %s, %s, %s, %s)'
         mycursor = self.db.cursor()
         user = (birthday['id'], birthday['name'], birthday['month_int'], birthday['month_str'], birthday['day'])
@@ -79,18 +80,21 @@ class ConnectDb(object):
         self.db.commit()
         return True
 
-    def get_birthday(self, sql_filter, offset, id):
+    def get_birthday(self, sql_filter, offset, user_id):
         if sql_filter == 'all':
-            sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} ORDER BY name LIMIT 10 OFFSET {}'.format(id, offset)
+            sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} ' \
+                  'ORDER BY name LIMIT 10 OFFSET {}'.format(user_id, offset)
         else:
             month = datetime.date.today().month
             today = datetime.date.today().day
             if sql_filter == 'week':
-                sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} AND month_int = {} AND day BETWEEN {} and {} ORDER BY name LIMIT 10 OFFSET {}'.format(
-                    id, month, today, today + 7, offset)
+                sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} ' \
+                      'AND month_int = {} AND day BETWEEN {} and {} ORDER BY name LIMIT 10 OFFSET {}'.format(
+                    user_id, month, today, today + 7, offset)
             else:
-                sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} AND month_int = {} ORDER BY name LIMIT 10 OFFSET {}'.format(
-                    id, month, offset)
+                sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} ' \
+                      'AND month_int = {} ORDER BY name LIMIT 10 OFFSET {}'.format(
+                    user_id, month, offset)
 
         mycursor = self.db.cursor()
         mycursor.execute(sql)
@@ -107,8 +111,8 @@ class ConnectDb(object):
         self.db.commit()
         return True
 
-    def get_offset(self, id):
-        sql = 'SELECT offset FROM Addition_data Where id = {}'.format(id)
+    def get_offset(self, user_id):
+        sql = 'SELECT offset FROM Addition_data Where id = {}'.format(user_id)
         mycursor = self.db.cursor()
         mycursor.execute(sql)
         myresult = mycursor.fetchone()
@@ -144,8 +148,8 @@ class ConnectDb(object):
                 bot.send_message(message.chat.id, birthdays_list, reply_markup=keyboard)
 
     def get_birthdays_for_deletion(self, name, offset, user_id):
-        sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} and name REGEXP "{}" LIMIT 10 OFFSET {}'.format(
-            user_id, name, offset)
+        sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} ' \
+              'and name REGEXP "{}" LIMIT 10 OFFSET {}'.format(user_id, name, offset)
         mycursor = self.db.cursor()
         mycursor.execute(sql)
         myresult = mycursor.fetchall()
