@@ -81,15 +81,15 @@ class ConnectDb(object):
 
     def get_birthday(self, sql_filter, offset, id):
         if sql_filter == 'all':
-            sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {}  LIMIT 10 OFFSET {}'.format(id, offset)
+            sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} ORDER BY name LIMIT 10 OFFSET {}'.format(id, offset)
         else:
             month = datetime.date.today().month
             today = datetime.date.today().day
             if sql_filter == 'week':
-                sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} AND month_int = {} AND day BETWEEN {} and {} LIMIT 10 OFFSET {}'.format(
+                sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} AND month_int = {} AND day BETWEEN {} and {} ORDER BY name LIMIT 10 OFFSET {}'.format(
                     id, month, today, today + 7, offset)
             else:
-                sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} AND month_int = {} LIMIT 10 OFFSET {}'.format(
+                sql = 'SELECT name, month_str, day FROM Birthdays WHERE id = {} AND month_int = {} ORDER BY name LIMIT 10 OFFSET {}'.format(
                     id, month, offset)
 
         mycursor = self.db.cursor()
@@ -97,8 +97,11 @@ class ConnectDb(object):
         myresult = mycursor.fetchall()
         return myresult
 
-    def delete_birthday(self, name, id):
-        sql = 'DELETE FROM Birthdays WHERE id = {} AND name = "{}"'.format(id, name)
+    def delete_birthday(self, name, month_str, day, user_id):
+        sql = 'DELETE FROM Birthdays WHERE id = {} AND name = "{}" AND month_str = "{}" AND day = {}'.format(user_id,
+                                                                                                             name,
+                                                                                                             month_str,
+                                                                                                             day)
         mycursor = self.db.cursor()
         mycursor.execute(sql)
         self.db.commit()
@@ -124,7 +127,7 @@ class ConnectDb(object):
         offset = db.get_offset(user_id)
         birthdays = db.get_birthday(sql_filter, offset, user_id)
         birthdays_list = db.list_change(birthdays, offset)
-        next_birthday = db.get_birthday(sql_filter, offset + 11, user_id)
+        next_birthday = db.get_birthday(sql_filter, offset + 10, user_id)
         if not next_birthday:
             try:
                 bot.edit_message_text(chat_id=message.chat.id, message_id=message.message_id,
@@ -151,27 +154,27 @@ class ConnectDb(object):
     def get_list_of_birthdays_for_deletion(self, message, name, user_id):
         offset = db.get_offset(user_id)
         birthdays = db.get_birthdays_for_deletion(name, offset, user_id)
-        birthdays_list = db.list_change(birthdays, offset)
-        next_birthday = db.get_birthdays_for_deletion(name, offset + 11, user_id)
+        next_birthday = db.get_birthdays_for_deletion(name, offset + 10, user_id)
         if not next_birthday:
             if offset == 0 and not birthdays:
                 bot.send_message(message.chat.id, 'Я никого не нашел 🤷‍♂️')
             else:
                 if len(birthdays) == 1:
-                    print(birthdays)
-                    print(birthdays_list)
-                    bot.send_message(message.chat.id, birthdays)#разобраться с тем, почеу не выводится все данные и сделать запрос на то, удалять или нет
+                    value = 'delete_{}_{}_{}'.format(birthdays[0][0], birthdays[0][1], birthdays[0][2])
+                    text = 'Убираем "{}" из списка именинников?😳'.format(birthdays[0][0])
+                    keyboards.keyboard_delete_y_or_n(message, text, bot, value, 1)
                 else:
                     from telebot import types
                     buttons = []
                     keyboard = types.InlineKeyboardMarkup()
                     for names in birthdays:
-                        print(names)
                         birthday = str(names).replace(',', '').replace("'", '').replace('(', '').replace(')', '')
                         text = str(offset + 1) + '. ' + birthday
                         offset += 1
-                        print(text)
-                        buttons.append(types.InlineKeyboardButton(text=text, callback_data='delete_{}'.format(names[0])))
+                        buttons.append(
+                            types.InlineKeyboardButton(text=text,
+                                                       callback_data='delete_{}_{}_{}'.format(names[0], names[1],
+                                                                                              names[2])))
                     for button in buttons:
                         keyboard.add(button)
                     bot.send_message(message.chat.id, 'Выбирай:', reply_markup=keyboard)
@@ -199,6 +202,7 @@ def commands(message):
 
 @bot.message_handler(commands=['all'])
 def all_birthdays(message):
+    # Сделать выборку имен с сортировкой имени по алфавиту
     db.set_addition_data('offset', 0, message.from_user.id)
     db.get_list_of_birthdays(message, 'all', message.from_user.id)
 
@@ -259,12 +263,10 @@ def callback_inline(call):
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                   text='Добавил 😌')
 
-
         elif value == 'no':
             db.set_addition_data('add_user', '1', call.message.chat.id)
             bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
                                   text='Давай по новой \nТак кто именинник?')
-
 
     elif command == 'month':
         bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
@@ -293,15 +295,21 @@ def callback_inline(call):
             db.get_list_of_birthdays(call.message, 'month', call.from_user.id)
 
     elif command == 'delete':
-        #сделать запрос на удаление
-        db.delete_birthday(value, call.from_user.id)
+        keyboards.keyboard_delete_y_or_n(call.message, 'Убираем "{}" из списка именинников?😳'.format(value), bot,
+                                         call.data)
 
     elif command == 'deleting':
         if value == 'yes':
-            db.delete_birthday(value, call.from_user.id)
-            bot.send_message(call.message.chat.id, 'Удалил')
+            name = call.data.split('_')[-3]
+            month_str = call.data.split('_')[-2]
+            day = call.data.split('_')[-1]
+            db.delete_birthday(name, month_str, day, call.from_user.id)
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                                  text='Удалил😎')
         else:
-            bot.send_message(call.message.chat.id, 'Ok, оставляем')
+            bot.edit_message_text(chat_id=call.message.chat.id, message_id=call.message.message_id,
+                                  text='Ok, оставляем☺️')
+
 
 def main():
     bot.polling()
